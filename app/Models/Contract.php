@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Contract extends Model
 {
@@ -41,6 +42,11 @@ class Contract extends Model
     public function package() : BelongsTo
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function implementation() : HasMany
+    {
+        return $this->hasMany(Implementation::class, 'ugovor_id');
     }
     protected function casts(): array
     {

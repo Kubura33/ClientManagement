@@ -18,10 +18,11 @@ return new class extends Migration
             $table->foreignIdFor(\App\Models\ImplementationStatus::class, 'status_id');
             $table->foreignIdFor(\App\Models\Package::class, 'paket_id');
             $table->json('funkcionalnosti');
+            $table->string('status_implementiranja')->nullable();
             $table->string('broj_ugovora');
             $table->string('broj_aneksa');
             $table->year('godina_ugovora');
-            $table->date('datum_implementacije');
+            $table->date('datum_implementacije')->nullable();
             $table->timestamps();
         });
     }

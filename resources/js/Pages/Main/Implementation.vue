@@ -7,10 +7,7 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 </script>
 
 <template>
-    <AuthenticatedLayout>
-        <template #header>
-            Unos nove firme
-        </template>
+
         <div class="p-4">
             <form @submit.prevent="submit">
                 <div class="w-1/4 ">
@@ -108,7 +105,7 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+
 </template>
 
 <style scoped>

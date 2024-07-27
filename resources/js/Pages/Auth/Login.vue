@@ -15,7 +15,7 @@ defineProps({
         type: String,
     },
 });
-
+defineOptions({layout: GuestLayout})
 const form = useForm({
     username: '',
     password: '',
@@ -27,10 +27,11 @@ const submit = () => {
         onFinish: () => form.reset('password'),
     });
 };
+
 </script>
 
 <template>
-    <GuestLayout>
+
         <Head title="Log in" />
 
         <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
@@ -90,5 +91,5 @@ const submit = () => {
                 </PrimaryButton>
             </div>
         </form>
-    </GuestLayout>
+
 </template>

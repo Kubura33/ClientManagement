@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('functionality_package', function (Blueprint $table) {
+        Schema::create('implementations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('package_id')->constrained()->onDelete('cascade');
-            $table->foreignId('functionality_id')->constrained()->onDelete('cascade');
-
+            $table->foreignIdFor(\App\Models\Contract::class, 'ugovor_id');
+            $table->foreignId('zaduzen_za_implementaciju');
+            $table->foreignId('implementirao');
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('functionality_package');
+        Schema::dropIfExists('implementations');
     }
 };

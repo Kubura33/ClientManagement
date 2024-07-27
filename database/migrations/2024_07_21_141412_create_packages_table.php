@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('packages', function (Blueprint $table) {
             $table->id();
-            $table->string('ime');
-
+            $table->string('ime');;
             $table->double('cena');
+            $table->integer("broj_besplatnih_instalacija_godisnje");
             $table->timestamps();
         });
     }

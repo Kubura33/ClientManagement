@@ -1,6 +1,7 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+    use App\Models\Package;
+    use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -11,11 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('functionality_package', function (Blueprint $table) {
+        Schema::create('market_package', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('package_id')->constrained()->onDelete('cascade');
-            $table->foreignId('functionality_id')->constrained()->onDelete('cascade');
-
+            $table->foreignIdFor(\App\Models\Market::class, 'trziste_id');
+            $table->foreignIdFor(Package::class, 'paket_id');
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('functionality_package');
+        Schema::dropIfExists('market_package');
     }
 };

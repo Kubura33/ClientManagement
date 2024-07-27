@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('companies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('klijent_id');
+            $table->foreignIdFor(\App\Models\Market::class,'trziste_id');
             $table->string('ime');
             $table->string('PIB');
             $table->string('MB');
-            $table->string('trziste');
             $table->timestamps();
         });
     }

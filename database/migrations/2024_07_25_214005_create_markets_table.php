@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('functionality_package', function (Blueprint $table) {
+        Schema::create('markets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('package_id')->constrained()->onDelete('cascade');
-            $table->foreignId('functionality_id')->constrained()->onDelete('cascade');
-
+            $table->string('ime_trzista');
             $table->timestamps();
         });
     }
@@ -25,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('functionality_package');
+        Schema::dropIfExists('markets');
     }
 };
