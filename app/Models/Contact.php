@@ -10,6 +10,7 @@ class Contact extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'firma_id',
         'kompanija',
         'ime_prezime',
         'telefon',
@@ -21,6 +22,7 @@ class Contact extends Model
         return [
             'ime_prezime' => 'encrypted',
             'telefon' => 'encrypted',
+            'telefon_2' => 'encrypted'
         ];
     }
 

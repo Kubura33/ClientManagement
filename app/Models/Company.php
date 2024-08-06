@@ -12,6 +12,7 @@ class Company extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'trziste_id',
         'klijent_id',
         'ime',
         'PIB',
@@ -21,7 +22,7 @@ class Company extends Model
 
     public function client() : BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class, 'klijent_id');
     }
 
     public function connection(): HasOne
@@ -37,5 +38,10 @@ class Company extends Model
     public function contract() : HasOne
     {
         return $this->hasOne(Contract::class, 'firma_id');
+    }
+
+    public function market() : BelongsTo
+    {
+        return $this->belongsTo(Market::class, 'trziste_id');
     }
 }

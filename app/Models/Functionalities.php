@@ -10,6 +10,8 @@ class Functionalities extends Model
 {
     use HasFactory;
 
+    protected $guarded = [];
+
     public function package(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Package::class, 'functionality_package', 'functionality_id', 'package_id');

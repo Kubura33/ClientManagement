@@ -21,9 +21,9 @@ const filter = ref('')
                     U procesu
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                    <li><a class="dropdown-item" href="#">U toku</a></li>
-                    <li><a class="dropdown-item" href="#">Čeka se neka funkcionalnost</a></li>
-                    <li><a class="dropdown-item" href="#">Ne javljalju se</a></li>
+                    <li><Link :href="route('filter', {filter:1})" class="dropdown-item" href="#">U toku</Link></li>
+                    <li><Link :href="route('filter', {filter:2})" class="dropdown-item" href="#">Čeka se neka funkcionalnost</Link></li>
+                    <li><Link :href="route('filter', {filter:3})" class="dropdown-item" href="#">Ne javljalju se</Link></li>
                 </ul>
             </div>
             <div>

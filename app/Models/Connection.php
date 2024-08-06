@@ -18,4 +18,11 @@ class Connection extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    protected function casts(): array
+    {
+        return [
+            'konekcija' => 'encrypted'
+        ];
+    }
 }

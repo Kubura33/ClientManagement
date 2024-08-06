@@ -110,7 +110,7 @@
                 ['funkcionalnost' => 'Automatsko slanje potpisanih naloga'],
                 ['funkcionalnost' => 'Integracija sa Web Service-om / API-jem'],
                 ['funkcionalnost' => 'Zaključvanje odredjenih polja po nalogu'],
-                ['funkcionalnost' => 'Email notiikacije o izvodima i stanjima'],
+                ['funkcionalnost' => 'Email notifikacije o izvodima i stanjima'],
             ]);
             Package::where('ime', 'Basic')->first()->functionalities()->attach([1, 2]);
             Package::where('ime', 'Light')->first()->functionalities()->attach([1, 2, 3, 4]);

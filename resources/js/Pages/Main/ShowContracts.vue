@@ -5,13 +5,15 @@ import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {router, useForm} from "@inertiajs/vue3";
 import InputError from "@/Components/InputError.vue";
-import {ref} from "vue";
+
 
 const props = defineProps({
         companies: Array,
+        filter: Number
+
     }
 )
-
+console.log(props.filter)
 const form = useForm({
     klijent: "",
     ime_firme: "",

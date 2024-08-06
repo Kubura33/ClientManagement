@@ -11,6 +11,7 @@ class Package extends Model
 {
     use HasFactory;
 
+    protected $guarded = [];
     public function contract() : HasMany
     {
         return $this->hasMany(Contract::class, 'paket_id');

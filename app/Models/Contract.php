@@ -31,17 +31,17 @@ class Contract extends Model
 
     public function company() : BelongsTo
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Company::class, 'firma_id');
     }
 
     public function status():BelongsTo
     {
-        return $this->belongsTo(ImplementationStatus::class);
+        return $this->belongsTo(ImplementationStatus::class, 'status_id');
     }
 
     public function package() : BelongsTo
     {
-        return $this->belongsTo(Package::class);
+        return $this->belongsTo(Package::class, 'paket_id');
     }
 
     public function implementation() : HasMany
@@ -54,4 +54,5 @@ class Contract extends Model
             'funkcionalnosti' => 'array'
         ];
     }
+
 }

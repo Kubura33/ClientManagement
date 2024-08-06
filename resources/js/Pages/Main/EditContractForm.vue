@@ -3,43 +3,54 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {useForm} from "@inertiajs/vue3";
-import {reactive, ref} from "vue";
+import {computed, reactive, ref} from "vue";
 import InputError from "@/Components/InputError.vue";
-import ContactModal from "@/Components/ContactModal.vue";
 
 const props = defineProps({
     packages: Array,
     statuses: Array,
     fakturisanje: Array,
+    contract: Object
 })
-const showModal = ref(false);
+console.log(props.contract)
+const contact = reactive({
+    id: 0,
+    ime_prezime: "",
+    email1: "",
+    email2: "",
+    telefon1: "",
+    telefon2: ""
+});
 const customFunc = ref("");
 const doesntExist = ref(1)
-const contactModal = ref(null)
 const forma = useForm({
-    klijent: "",
-    ime_firme: "",
-    PIB: "",
-    MB: "",
-    package: null,
-    contacts: [],
-    functionalities: [],
-    connection: "",
-    implementation_status: null,
-    tip_implementacije: "",
-    date: null,
-    ugovor: "",
-    aneks: "",
-    tip_fakturisanja: null,
-    iznos_fakture: null
+    klijent: props.contract?.company?.client ? props.contract.company.client.ime : "",
+    ime_firme: props.contract?.company ? props.contract.company.ime : "",
+    PIB: props.contract?.company ? props.contract.company.PIB : "",
+    MB: props.contract?.company ? props.contract.company.MB : "",
+    package: props.contract ? props.contract.paket_id : null,
+    contacts: props.contract?.company ? props.contract.company.contacts : null,
+    functionalities: props.contract ? props.contract.funkcionalnosti : null,
+    connection: props.contract?.company ? props.contract.company.connection.konekcija : "null",
+    implementation_status: props.contract ? props.contract.status_id : null,
+    tip_implementacije: props.contract ? props.contract.status_implementiranja : null,
+    date: props.contract ? props.contract.datum_implementacije : null,
+    ugovor: props.contract ? props.contract.broj_ugovora : "",
+    aneks: props.contract ? props.contract.broj_aneksa : "",
+    tip_fakturisanja: props.contract ? props.contract.fakturisanje_id : null,
+    iznos_fakture: props.contract ? props.contract.iznos_fakture : null
 })
 
-const chosenFunctionalities = ref([])
-const addToContacts = (newContact) => {
-    if (newContact.name && (newContact.phone || newContact.email)) {
-        forma.contacts.push(JSON.parse(JSON.stringify(newContact)));
-        closeModal();
-
+const chosenFunctionalities = ref(props.contract ? props.contract.funkcionalnosti : [])
+const addToContacts = () => {
+    if (contact.ime_prezime && contact.telefon1 && contact.email1) {
+        contact.id++;
+        forma.contacts.push(JSON.parse(JSON.stringify(contact)));
+        contact.ime_prezime = ""
+        contact.telefon1 = ""
+        contact.telefon2 = ""
+        contact.email1 = ""
+        contact.email2 = ""
     }
 
 }
@@ -47,16 +58,14 @@ const setFuncs = () => {
     const selectedPackage = props.packages.find(pkg => pkg.id === forma.package)
 
     if (selectedPackage) {
-        selectedPackage.functionalities.forEach(f => chosenFunctionalities.value.push({
-            funkcionalnost: f.funkcionalnost,
-            isDone: false
-        }))
+        selectedPackage.functionalities.forEach(f => chosenFunctionalities.value.push(f))
+        // chosenFunctionalities.value.push(selectedPackage.functionalities)
         forma.functionalities = [...chosenFunctionalities.value];
 
     }
 }
 const toggleFunctionality = (func) => {
-    const funcIndex = forma.functionalities.findIndex(f => f.funkcionalnost === func.funkcionalnost);
+    const funcIndex = forma.functionalities.findIndex(f => f.id === func.id);
     if (funcIndex !== -1) {
         forma.functionalities.splice(funcIndex, 1);
     } else {
@@ -65,56 +74,34 @@ const toggleFunctionality = (func) => {
 
 };
 const addCustomFunc = () => {
-    const newFunc = {
-        funkcionalnost: customFunc.value.trim(),
-    };
-    const exists = forma.functionalities.some(f =>
-        f.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase()
-    );
 
-    if (!exists) {
-        forma.functionalities.push(newFunc);
-        chosenFunctionalities.value.push(newFunc);
-        customFunc.value = ""; // Clear the input field
-    } else {
-        alert("This functionality already exists.");
+    const newFunc = {
+        funkcionalnost: customFunc.value,
+
     }
-};
-const closeModal = () => {
-    showModal.value = false
-    document.body.classList.remove('blur-background');
+    forma.functionalities.forEach(f => {
+        if (f.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase()) {
+
+            doesntExist.value = 0
+        } else {
+            doesntExist.value = 1
+        }
+    })
+    if (doesntExist) {
+        forma.functionalities.push(newFunc)
+        chosenFunctionalities.value.push(newFunc)
+    }
+
 }
-const openModal= () => {
-    showModal.value = true
-    document.body.classList.add('blur-background');
-}
-const submit = () => forma.post(route('novi-klijent'))
+
+const isFuncChecked = (func) => computed(() => {
+    return props.contract?.funkcionalnosti.some(f => f.funkcionalnost === func.funkcionalnost);
+})
+const submit = () => forma.post(route('contract.update', {contract: props.contract.id}))
 </script>
 
 <template>
 
-
-    <ContactModal @addToContacts="addToContacts" :show="showModal" @closeModal="closeModal" ref="contactModal"></ContactModal>
-    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
-         aria-labelledby="exampleModalCenterTitle" v-show="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    ...
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="p-4">
         <form @submit.prevent="submit">
             <div class="w-2/4 ">
@@ -200,30 +187,8 @@ const submit = () => forma.post(route('novi-klijent'))
             </div>
 
             <div id="text-boxes" class="flex flex-row gap-10 mt-6">
-                <div class="contacts">
-                    <div class="flex justify-between ">
-                        <label class="block text-gray-700 text-sm font-bold ">Kontakti</label>
-                        <span class="text-3xl font-bold text-green-600 cursor-pointer" @click="openModal">&#43;</span>
-                    </div>
-
-                    <div class="bg-white shadow rounded min-w-[300px] min-h-[320px] max-h-[320px] overflow-y-auto p-4">
-                        <div class="contact-item mb-4 flex flex-col" v-for="contact in forma.contacts" v-if="forma.contacts.length>0">
-                            <span class="text-xl font-semibold mb-2">{{contact.name}}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.email">{{contact.email}}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.email2">{{contact.email2}}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.phone">{{contact.phone}}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.phone2">{{contact.phone2}}</span>
-
-                        </div>
-                        <div v-else>
-                            Trenutno nema dodatih kontakata, kliknite na plus da ih dodate
-                        </div>
-
-                    </div>
-                </div>
-
                 <div>
-                    <InputLabel value="Funkcionalnosti"/>
+                    <InputLabel for="email" value="Funkcionalnosti"/>
                     <div
 
                         class="bg-white shadow rounded  pr-12 pl-5 py-6 min-h-[320px] min-w-[400px] flex flex-col gap-1 relative">
@@ -241,17 +206,16 @@ const submit = () => forma.post(route('novi-klijent'))
                                 </label>
                                 <input
                                     @change="toggleFunctionality(func)"
-                                    :checked="forma.functionalities.includes(func)"
+                                    :checked="isFuncChecked(func)"
 
                                     class="form-check-input border-2 border-black" type="checkbox" value=""
                                     :id="func.funkcionalnost">
                             </div>
                             <div>
                                 <input class="form-check-input border-2 border-black" type="checkbox" value=""
-                                       @change="func.isDone = !func.isDone"
                                        :checked="func.isDone"
+                                       @change="func.isDone = !func.isDone"
                                 >
-
 
                             </div>
 
@@ -279,6 +243,94 @@ const submit = () => forma.post(route('novi-klijent'))
                     <InputError :message="forma.errors.connection" v-if="forma.errors.connection"/>
                 </div>
             </div>
+            <div id="kontakti" class="mt-5 flex gap-6">
+                <div id="poljeZaUnosKontakta">
+                    <InputLabel value="Kontakt osoba"/>
+
+                    <div class="w-80 bg-white shadow p-6  rounded overflow-y-auto ">
+                        <div class="flex flex-col border-b-2 ">
+                            <div class="">
+                                <InputLabel value="Ime i prezime"/>
+
+                                <TextInput
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    v-model="contact.ime_prezime"
+
+                                />
+
+
+                            </div>
+                            <div class="mt-1">
+                                <InputLabel value="Email"/>
+
+                                <TextInput
+                                    type="email"
+                                    class="mt-1 block w-full"
+                                    v-model="contact.email1"
+                                />
+
+
+                            </div>
+                            <div class="mt-1">
+                                <InputLabel value="Email 2"/>
+
+                                <TextInput
+                                    type="email"
+                                    class="mt-1 block w-full"
+                                    v-model="contact.email2"
+                                />
+
+
+                            </div>
+                            <div class="mt-1">
+
+                                <InputLabel for="text" value="Telefon"/>
+
+                                <TextInput
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    v-model="contact.telefon1"
+                                />
+                                <InputLabel for="text" value="Telefon 2"/>
+
+                                <TextInput
+
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    v-model="contact.telefon2"
+                                />
+
+                            </div>
+                            <span class="mt-2 font-semibold cursor-pointer"
+                                  @click="addToContacts"
+                            >Dodaj u kontakt listu</span>
+                        </div>
+                        <InputError :message="forma.errors.contacts" v-if="forma.errors.contacts"/>
+                    </div>
+                </div>
+                <div class="p-8 grid grid-cols-3 gap-4 " v-if="forma.contacts">
+                    <div class="flex flex-col gap-2 bg-white shadow p-4 rounded text-lg"
+                         v-for="(addedContact, index) in forma.contacts" :key="index">
+                        <span class="text-xl font-bold">Kontakt {{ index + 1 }}</span>
+                        <span class="flex gap-1"> <span class="font-semibold">Ime i prezime: </span> <span
+                            class="font-bold">{{ addedContact.ime_prezime }}</span> </span>
+                        <span class="flex gap-1"> <span class="font-semibold">Telefon 1:</span> <span class="font-bold">{{
+                                addedContact.telefon
+                            }}</span>  </span>
+                        <span v-if="addedContact.telefon2" class="flex gap-1"> <span
+                            class="font-semibold">Telefon 2:</span> <span class="font-bold">{{
+                                addedContact.telefon2
+                            }}</span> </span>
+                        <span class="flex gap-2"> <span class="font-semibold">Email </span>
+                            <span class="font-bold">{{ addedContact.email }}</span>  </span>
+                        <span v-if="addedContact.email2" class="flex gap-1"> <span
+                            class="font-semibold">Email 2: </span> <span class="font-bold">{{
+                                addedContact.email2
+                            }}</span>  </span>
+                    </div>
+                </div>
+            </div>
             <div id="status_datum" class="flex flex-row gap-4 items-center">
                 <div class="mt-4">
                     <InputLabel for="email" value="Status implementacije"/>
@@ -301,7 +353,7 @@ const submit = () => forma.post(route('novi-klijent'))
                     </div>
                     <div class="flex gap-2 items-center">
                         <label for="">Čeka se neka funkcionalnost</label>
-                        <input type="radio" v-model="forma.tip_implementacije" value="Čeka se neka funkcionalnost">
+                        <input type="radio" v-model="forma.tip_implementacije" value="Ceka se neka funkcionalnost">
                     </div>
                     <InputError :message="forma.errors.tip_implementacije" v-if="forma.errors.tip_implementacije"/>
                 </div>

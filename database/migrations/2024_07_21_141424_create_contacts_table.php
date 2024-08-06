@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignIdFor(\App\Models\Company::class, 'firma_id');
             $table->string('ime_prezime');
             $table->string('telefon');
+            $table->string('telefon_2')->nullable();
             $table->string('email');
+            $table->string('email_2')->nullable();
             $table->timestamps();
         });
     }

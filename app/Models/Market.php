@@ -21,4 +21,5 @@ class Market extends Model
     {
         return $this->belongsToMany(Package::class, 'market_package', 'trziste_id', 'paket_id');
     }
+
 }
