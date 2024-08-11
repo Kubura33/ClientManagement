@@ -2,19 +2,20 @@
 import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
-import {useForm} from "@inertiajs/vue3";
-import {reactive, ref} from "vue";
+import {useForm, usePage} from "@inertiajs/vue3";
+import {onMounted, ref, inject} from "vue";
 import InputError from "@/Components/InputError.vue";
 import ContactModal from "@/Components/ContactModal.vue";
+import AddFunctionalityModal from "@/Components/AddFunctionalityModal.vue";
 
 const props = defineProps({
     packages: Array,
     statuses: Array,
     fakturisanje: Array,
+    existingFunctionalities: Array,
 })
-const showModal = ref(false);
-const customFunc = ref("");
-const doesntExist = ref(1)
+const page = usePage()
+const chosenFunctionalities = ref([])
 const contactModal = ref(null)
 const forma = useForm({
     klijent: "",
@@ -23,7 +24,8 @@ const forma = useForm({
     MB: "",
     package: null,
     contacts: [],
-    functionalities: [],
+    functionalities: chosenFunctionalities,
+    customFunctionalities: [],
     connection: "",
     implementation_status: null,
     tip_implementacije: "",
@@ -31,70 +33,163 @@ const forma = useForm({
     ugovor: "",
     aneks: "",
     tip_fakturisanja: null,
-    iznos_fakture: null
+    iznos_fakture: null,
+    godina_ugovora: null,
 })
 
-const chosenFunctionalities = ref([])
-const addToContacts = (newContact) => {
-    if (newContact.name && (newContact.phone || newContact.email)) {
-        forma.contacts.push(JSON.parse(JSON.stringify(newContact)));
-        closeModal();
 
+
+
+
+//CONTACT MODAL
+const showContactModal = ref(false);
+const isEdit = ref(false)
+const contactToEdit = ref(null)
+
+const addToContacts = (newContact) => {
+    // Check if the new contact has the necessary fields
+    if (newContact.ime_prezime && (newContact.phone || newContact.email)) {
+        let isDuplicate = false;
+
+        // Loop through existing contacts to check for duplicates
+        forma.contacts.forEach(fc => {
+            // Check if fc.email or fc.email2 matches newContact.email or newContact.email2
+            // and similarly for phone and phone2, considering only non-empty values
+            if (
+                (fc.email && newContact.email && fc.email === newContact.email) ||
+                (fc.email2 && newContact.email2 && fc.email2 === newContact.email2) ||
+                (fc.phone && newContact.phone && fc.phone === newContact.phone) ||
+                (fc.phone2 && newContact.phone2 && fc.phone2 === newContact.phone2) ||
+                (fc.email && newContact.email2 && fc.email === newContact.email2) ||
+                (fc.email2 && newContact.email2 && fc.email2 === newContact.email2) ||
+                (fc.phone && newContact.phone2 && fc.phone === newContact.phone2) ||
+                (fc.phone2 && newContact.phone2 && fc.phone2 === newContact.phone2)
+            ) {
+                isDuplicate = true;
+            }
+        });
+
+        // If a duplicate is found, alert the user
+        if (isDuplicate) {
+            alert('Kontakt sa istim e-mailom ili brojem je vec unet.');
+        } else {
+            // Otherwise, add the new contact
+            forma.contacts.push(JSON.parse(JSON.stringify(newContact)));
+            closeContactModal();
+            contactModal.value.clear();
+        }
+    } else {
+        // Optionally handle the case where the new contact is missing required fields
+        alert('Molimo unesite ime i prezime i email ili telefon');
     }
+};
+
+const closeContactModal = () => {
+    isEdit.value = false
+    showContactModal.value = false
+}
+const openContactModal= () => {
+    isEdit.value = false
+    showContactModal.value = true
+    contactModal.value.clear()
 
 }
+
+const editContact = (contact) => {
+    contactToEdit.value = contact
+    isEdit.value = true
+    showContactModal.value = true
+}
+const changeContact = (contact) => {
+    forma.contacts.forEach( (c, index) => {
+        if(c.uniqueId === contact.uniqueId){
+            forma.contacts[index] = contact
+        }
+    })
+    closeContactModal()
+}
+//FUNCTIONALITIES
+
+const showFunctionalityModal = ref(false);
+const funcModal = ref(null)
 const setFuncs = () => {
     const selectedPackage = props.packages.find(pkg => pkg.id === forma.package)
 
     if (selectedPackage) {
-        selectedPackage.functionalities.forEach(f => chosenFunctionalities.value.push({
-            funkcionalnost: f.funkcionalnost,
-            isDone: false
-        }))
-        forma.functionalities = [...chosenFunctionalities.value];
+
+        chosenFunctionalities.value = [...selectedPackage.functionalities]
 
     }
 }
 const toggleFunctionality = (func) => {
-    const funcIndex = forma.functionalities.findIndex(f => f.funkcionalnost === func.funkcionalnost);
+    const funcIndex = chosenFunctionalities.value.findIndex(f => f.funkcionalnost === func.funkcionalnost);
+    const customFuncIndex = forma.customFunctionalities.findIndex(f => f.funkcionalnost === func.funkcionalnost);
     if (funcIndex !== -1) {
-        forma.functionalities.splice(funcIndex, 1);
+        chosenFunctionalities.value.splice(funcIndex, 1);
     } else {
-        forma.functionalities.push(func);
+        chosenFunctionalities.value.push(func);
+    }
+    if(funcIndex !== -1){
+        forma.customFunctionalities.splice(customFuncIndex, 1)
     }
 
 };
-const addCustomFunc = () => {
-    const newFunc = {
-        funkcionalnost: customFunc.value.trim(),
-    };
-    const exists = forma.functionalities.some(f =>
-        f.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase()
-    );
-
-    if (!exists) {
-        forma.functionalities.push(newFunc);
-        chosenFunctionalities.value.push(newFunc);
-        customFunc.value = ""; // Clear the input field
-    } else {
-        alert("This functionality already exists.");
+const closeFunctionalityModal = () => {
+    showFunctionalityModal.value = false
+    if(funcModal.value){
+        funcModal.value.reset()
     }
-};
-const closeModal = () => {
-    showModal.value = false
-    document.body.classList.remove('blur-background');
 }
-const openModal= () => {
-    showModal.value = true
-    document.body.classList.add('blur-background');
+const openFunctionalityModal = () => {
+    showFunctionalityModal.value = true
+    if(funcModal.value){
+        funcModal.value.reset()
+    }
 }
-const submit = () => forma.post(route('novi-klijent'))
+const saveFunc = (checkedFunctionalities, customFunc) => {
+    if (Array.isArray(forma.customFunctionalities)) {
+        if(customFunc.length > 0)
+            forma.customFunctionalities = customFunc;
+    } else {
+        console.log('Expected forma.customFunctionalities to be an array');
+    }
+    forma.functionalities = checkedFunctionalities;
+    if (chosenFunctionalities.value) {
+        chosenFunctionalities.value = chosenFunctionalities.value.concat(checkedFunctionalities);
+    }
+    closeFunctionalityModal();
+}
+const setTitle = inject('setTitle')
+onMounted(() => {
+    setTitle(" - Novi klijent")
+
+})
+
+// ROLE PERMISSIONS
+const submit = () => {
+    forma.functionalities = chosenFunctionalities.value
+    forma.post(route('novi-klijent'))
+}
+
 </script>
 
 <template>
-
-
-    <ContactModal @addToContacts="addToContacts" :show="showModal" @closeModal="closeModal" ref="contactModal"></ContactModal>
+    <AddFunctionalityModal :show="showFunctionalityModal"
+                           @closeModal="closeFunctionalityModal"
+                           :existingFunctionalities="existingFunctionalities"
+                           :chosen-functionalities="chosenFunctionalities"
+                           :form-custom-funcs="forma.customFunctionalities"
+                           @saveFunctionalities="saveFunc"
+                           ref="funcModal"
+    ></AddFunctionalityModal>
+    <ContactModal
+        @addToContacts="addToContacts"
+        :show="showContactModal"
+        @closeModal="closeContactModal"
+        @finishEdit="changeContact"
+        :contact-to-edit="contactToEdit"
+        :isEdit="isEdit"
+        ref="contactModal"></ContactModal>
     <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
          aria-labelledby="exampleModalCenterTitle" v-show="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -115,7 +210,7 @@ const submit = () => forma.post(route('novi-klijent'))
             </div>
         </div>
     </div>
-    <div class="p-4">
+    <div class="ml-[100px]">
         <form @submit.prevent="submit">
             <div class="w-2/4 ">
                 <InputLabel for="name" value="Ime firme - grupacije/klijenta"/>
@@ -125,7 +220,6 @@ const submit = () => forma.post(route('novi-klijent'))
                     type="text"
                     class="mt-1 block w-full"
                     v-model="forma.klijent"
-
 
                 />
                 <InputError :message="forma.errors.klijent" v-if="forma.errors.klijent"/>
@@ -203,12 +297,16 @@ const submit = () => forma.post(route('novi-klijent'))
                 <div class="contacts">
                     <div class="flex justify-between ">
                         <label class="block text-gray-700 text-sm font-bold ">Kontakti</label>
-                        <span class="text-3xl font-bold text-green-600 cursor-pointer" @click="openModal">&#43;</span>
+                        <span class="text-3xl font-bold text-green-600 cursor-pointer" @click="openContactModal">&#43;</span>
                     </div>
 
-                    <div class="bg-white shadow rounded min-w-[300px] min-h-[320px] max-h-[320px] overflow-y-auto p-4">
-                        <div class="contact-item mb-4 flex flex-col" v-for="contact in forma.contacts" v-if="forma.contacts.length>0">
-                            <span class="text-xl font-semibold mb-2">{{contact.name}}</span>
+                    <div
+                        class="bg-white shadow rounded w-[300px] min-h-[320px] max-h-[320px]  overflow-y-auto p-4">
+                        <div class="contact-item mb-4 flex flex-col hover:bg-gray-200 p-1 cursor-pointer"
+                             @dblclick="editContact(contact)"
+                             v-for="contact in forma.contacts"
+                             v-if="forma.contacts.length>0">
+                            <span class="text-xl font-semibold mb-2">{{contact.ime_prezime}}</span>
                             <span class="text-sm text-gray-600" v-if="contact.email">{{contact.email}}</span>
                             <span class="text-sm text-gray-600" v-if="contact.email2">{{contact.email2}}</span>
                             <span class="text-sm text-gray-600" v-if="contact.phone">{{contact.phone}}</span>
@@ -223,10 +321,13 @@ const submit = () => forma.post(route('novi-klijent'))
                 </div>
 
                 <div>
-                    <InputLabel value="Funkcionalnosti"/>
-                    <div
+                    <div class="flex justify-between ">
+                        <label class="block text-gray-700 text-sm font-bold ">Funkcionalnosti</label>
+                        <span class="text-3xl font-bold text-green-600 cursor-pointer" @click="openFunctionalityModal">&#43;</span>
+                    </div>
 
-                        class="bg-white shadow rounded  pr-12 pl-5 py-6 min-h-[320px] min-w-[400px] flex flex-col gap-1 relative">
+                    <div
+                        class="bg-white shadow rounded  pr-12 pl-5 py-6 h-[320px] overflow-y-auto min-w-[400px] flex flex-col gap-1 relative">
                         <div class="flex justify-between" v-if="forma.package">
                             <label for="">Naziv funkc.</label>
                             <label for="">Odradjeno</label>
@@ -241,7 +342,7 @@ const submit = () => forma.post(route('novi-klijent'))
                                 </label>
                                 <input
                                     @change="toggleFunctionality(func)"
-                                    :checked="forma.functionalities.includes(func)"
+                                    :checked="chosenFunctionalities.includes(func)"
 
                                     class="form-check-input border-2 border-black" type="checkbox" value=""
                                     :id="func.funkcionalnost">
@@ -256,16 +357,6 @@ const submit = () => forma.post(route('novi-klijent'))
                             </div>
 
                         </div>
-                        <div class="flex gap-2 mt-4">
-                            <label for="">Dodaj funkcionalnost</label>
-                            <TextInput
-                                v-model="customFunc"
-                                @keydown.enter.prevent="addCustomFunc"
-                                type="text"
-                                class="mt-1 block w-full"
-                            />
-                        </div>
-                        <InputError :message="'Ova funkcionalnost je vec dodata'" v-if="!doesntExist"/>
                     </div>
                     <InputError :message="forma.errors.functionalities" v-if="forma.errors.functionalities"/>
                 </div>
@@ -306,7 +397,7 @@ const submit = () => forma.post(route('novi-klijent'))
                     <InputError :message="forma.errors.tip_implementacije" v-if="forma.errors.tip_implementacije"/>
                 </div>
                 <div class="mt-4">
-                    <InputLabel for="datum" value="Datum"/>
+                    <InputLabel for="datum" value="Datum implementacije"/>
 
                     <TextInput
                         id="datum"
@@ -316,6 +407,20 @@ const submit = () => forma.post(route('novi-klijent'))
                         required
                     />
                     <InputError :message="forma.errors.date" v-if="forma.errors.date"/>
+
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel for="godina" value="Godina ugovora"/>
+
+                    <TextInput
+                        id="godina"
+                        type="text"
+                        class="mt-1 block w-full"
+                        v-model="forma.godina_ugovora"
+                        required
+                    />
+                    <InputError :message="forma.errors.godina_ugovora" v-if="forma.errors.godina_ugovora"/>
 
                 </div>
             </div>

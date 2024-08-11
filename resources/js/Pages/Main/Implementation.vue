@@ -5,7 +5,7 @@ import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {router, useForm} from "@inertiajs/vue3";
 import InputError from "@/Components/InputError.vue";
-import {ref} from "vue";
+import {onMounted, ref, inject} from "vue";
 
 const props = defineProps({
         companies: Array,
@@ -19,10 +19,14 @@ const form = useForm({
     MB: "",
 
 })
+const setTitle = inject('setTitle')
+onMounted(() => {
+    setTitle(" - Implementirano")
 
+})
 const goToContract = (companyId) => {
     router.get(route('contract.show', {id: companyId}))}
-const submit = () => form.post(route('search'))
+const submit = () => form.get(route('search'))
 </script>
 
 <template>
@@ -101,6 +105,8 @@ const submit = () => form.post(route('search'))
                     <th scope="col">Ime firme</th>
                     <th scope="col">PIB</th>
                     <th scope="col">MB</th>
+                    <th scope="col">Trziste</th>
+
                 </tr>
                 </thead>
                 <tbody>
@@ -108,6 +114,7 @@ const submit = () => form.post(route('search'))
                     <th scope="row"> {{company.ime }} </th>
                     <td> {{company.PIB}} </td>
                     <td>{{company.MB}}</td>
+                    <td>{{company.market.ime_trzista}}</td>
                 </tr>
                 </tbody>
             </table>

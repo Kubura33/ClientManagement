@@ -3,6 +3,7 @@
     namespace App\Http\Requests;
 
     use Illuminate\Foundation\Http\FormRequest;
+    use Illuminate\Support\Facades\Log;
     use Illuminate\Validation\Rule;
 
     class ContractRequest extends FormRequest
@@ -22,18 +23,18 @@
          */
         public function rules(): array
         {
-
             return [
                 'klijent' => ['string', 'max:255', 'nullable'],
                 'ime_firme' => ['required', 'string', 'max:255'],
-                'PIB' => ['string', 'max:9', 'required', Rule::unique('contracts')->ignore($this->contract->company->id)],
-                'MB' => ['string', 'max:8', 'required', Rule::unique('contracts')->ignore($this->contract->company->id)],
+                'PIB' => ['string', 'max:9', 'required', Rule::unique('companies')->ignore($this->contract?->company->id)],
+                'MB' => ['string', 'max:8', 'required', Rule::unique('companies')->ignore($this->contract?->company->id)],
                 'package' => ['required'],
                 'functionalities' => ['required', 'array'],
                 'connection' => ['required', 'max:1000'],
                 'contacts' => ['required', 'array'],
                 'implementation_status' => ['required'],
                 'date' => ['required_if:implementation_status, 3', 'date'],
+                'godina_ugovora' => ['nullable', 'digits:4', 'integer', 'min:1900', 'max:' . date('Y')],
                 'tip_implementacije' => ['required_if:implementation_status, 3'],
                 'ugovor' => ['required', 'string'],
                 'aneks' => ['string'],

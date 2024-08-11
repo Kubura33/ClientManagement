@@ -2,6 +2,7 @@
 
     namespace App\Http\Middleware;
 
+    use App\Models\Market;
     use Illuminate\Http\Request;
     use Inertia\Middleware;
 
@@ -38,7 +39,8 @@
                 'flash' => [
                     'success' => $request->session()->get('success'),
                     'error' => $request->session()->get('error'),
-                ]
+                ],
+                'trzista' => Market::all()
             ];
         }
     }

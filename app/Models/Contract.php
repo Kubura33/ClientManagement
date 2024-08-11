@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Contract extends Model
@@ -20,7 +21,8 @@ class Contract extends Model
         'broj_aneksa',
         'broj_ugovora',
         'godina_ugovora',
-        'datum_implementacije'
+        'datum_implementacije',
+        'iznos_fakture'
 
     ];
 
@@ -48,11 +50,11 @@ class Contract extends Model
     {
         return $this->hasMany(Implementation::class, 'ugovor_id');
     }
-    protected function casts(): array
+
+    public function functionalities(): BelongsToMany
     {
-        return [
-            'funkcionalnosti' => 'array'
-        ];
+        return $this->belongsToMany(Functionalities::class, 'contract_functionality', 'ugovor_id', 'funkcionalnost_id')
+            ->withPivot('uradjeno');
     }
 
 }

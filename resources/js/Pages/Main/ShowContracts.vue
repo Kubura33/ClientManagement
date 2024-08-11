@@ -4,6 +4,7 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {router, useForm} from "@inertiajs/vue3";
+import {onMounted, ref, inject} from 'vue'
 import InputError from "@/Components/InputError.vue";
 
 
@@ -13,7 +14,7 @@ const props = defineProps({
 
     }
 )
-console.log(props.filter)
+const title = ref("")
 const form = useForm({
     klijent: "",
     ime_firme: "",
@@ -23,12 +24,25 @@ const form = useForm({
 })
 
 const goToContract = (companyId) => {
-    router.get(route('contract.show', {id: companyId}))}
-const submit = () => form.post(route('search'))
+    router.get(route('contract.show', {id: companyId}))
+}
+const submit = () => form.get(route('filter', {filter: props.filter}))
+const setTitle = inject('setTitle')
+onMounted(() => {
+    if(props.filter == 1){
+        title.value = " - U procesu"
+    }else if(props.filter == 2){
+        title.value = " - Ceka se neka funkcionalnost"
+    }else if(props.filter == 3){
+        title.value = " - Ne javljalju se"
+    }
+    setTitle(title.value)
+
+})
+
 </script>
 
 <template>
-
     <div class="p-4">
         <form @submit.prevent="submit">
             <div class="w-1/4 ">
@@ -103,13 +117,15 @@ const submit = () => form.post(route('search'))
                     <th scope="col">Ime firme</th>
                     <th scope="col">PIB</th>
                     <th scope="col">MB</th>
+                    <th scope="col">Trziste</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr @dblclick="goToContract(company.id)" v-for="company in companies" class="cursor-pointer">
-                    <th scope="row"> {{company.ime }} </th>
-                    <td> {{company.PIB}} </td>
-                    <td>{{company.MB}}</td>
+                    <th scope="row"> {{ company.ime }}</th>
+                    <td> {{ company.PIB }}</td>
+                    <td>{{ company.MB }}</td>
+                    <td>{{ company.market.ime_trzista }}</td>
                 </tr>
                 </tbody>
             </table>

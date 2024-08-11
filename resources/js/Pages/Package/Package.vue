@@ -3,14 +3,13 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import {useForm} from '@inertiajs/vue3';
-import {ref, computed} from "vue";
+import {ref} from "vue";
+import PackageModal from "@/Components/PackageModal.vue";
 
 const functionalities = ref([]);
 const chosenPackage = ref(null);
 const currentPackage = ref(null);
 const funcToAdd = ref("")
-const isNew = ref(false)
-const doesntExist = ref(false)
 const props = defineProps({
     packages: Array,
     markets: Array,
@@ -23,6 +22,7 @@ const form = useForm({
     cena_paketa: "",
     broj_big: "",
     funkcionalnosti: [],
+    customFunkcionalnosti: [],
     trzista: []
 });
 
@@ -49,14 +49,14 @@ const addCustomFunc = () => {
     };
     const exists = form.funkcionalnosti?.some(f =>
         f.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase()
-    );
+    ) || form.customFunkcionalnosti.some(f => f.funkcionalnosti.toLowerCase() === newFunc.funkcionalnost.toLowerCase());
 
     if (!exists) {
-        form.funkcionalnosti.push(newFunc);
+        form.customFunkcionalnosti.push(newFunc);
         functionalities.value.push(newFunc);
         funcToAdd.value = ""; // Clear the input field
     } else {
-        alert("Ova funkcionalnost je vec dodata!");
+        alert("Ova funkcionalnost vec postoji");
     }
 };
 const addMarket = (trziste) => {
@@ -85,42 +85,47 @@ const toggleFunctionality = (func) => {
     }
 
 };
-const newPackage = () => {
-    chosenPackage.value = null
-    currentPackage.value = null
-    functionalities.value = []
-    form.reset();
-    isNew.value = true
-}
 
+
+// PACKAGE MODAL
+
+const showPackageModal = ref(false)
+const newPackage = () => {
+    showPackageModal.value = true
+}
 const submit = () => {
-    if (isNew.value) {
-        console.log("I am here")
-        form.post(route('paket.store'))
-    } else{
-        console.log("I am updating")
-        form.patch(route('paket.update', {package: currentPackage.value.id}))
-    }
+    form.patch(route('paket.update', {package: currentPackage.value.id}), {
+        onSuccess: () => {
+            form.reset()
+        }
+    })
+
 };
 </script>
 
 <template>
-    {{form.errors}}
+    <PackageModal
+        :show="showPackageModal"
+        :trzista="markets"
+        :existing-funcs="existingFuncs"
+        @closeModal="showPackageModal=false"
+    ></PackageModal>
     <div class="w-full flex items-center justify-center mb-10">
+
         <form class="w-full flex flex-col items-center justify-center mt-10" @submit.prevent="submit">
             <div class="lg:w-2/5 md:w-3/5">
                 <div>
                     <InputLabel for="" value="Izaberite paket ili kliknite plus za novi"/>
                     <div class="flex items-center gap-2">
                         <select v-model="chosenPackage"
-                                :disabled="isNew"
+
                                 @change="setData"
                                 class="form-select mt-2" aria-label="Default select example">
                             <option v-for="pkg in packages"> {{ pkg.ime }}</option>
                         </select>
-                        <span v-if="!isNew" @click="newPackage"
-                              class="text-5xl text-green-600 cursor-pointer">&#43;</span>
-                        <span v-else @click="isNew=false" class="text-5xl text-red-600 cursor-pointer">&#8722</span>
+                        <span @click="newPackage"
+                              class="text-5xl text-green-600 cursor-pointer">&#43;
+                        </span>
                     </div>
 
                 </div>
@@ -182,62 +187,59 @@ const submit = () => {
 
                     <InputError class="mt-2" :message="form.errors.broj_big"/>
                 </div>
-                <div class="mt-4">
-                    <InputLabel value="Unos funkcionalnosti koje ne postoje u sistemu"/>
+                <div class="mt-1 flex flex-col  ">
 
-                    <TextInput
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="funcToAdd"
-                        @keydown.enter.prevent="addCustomFunc"
-                    />
-                    <span class="text-sm ml-2">* Unesite naziv funkcionalnosti i kliknite enter</span>
+                    <div class="flex flex-col gap-2 mt-4">
+                        <label for="">Dodaj custom funkcionalnost (uneti pa pritisnuti enter)</label>
+                        <TextInput
+                            v-model="funcToAdd"
+                            @keydown.enter.prevent="addCustomFunc"
+                            type="text"
+                            class="mt-1 block w-full"
+                        />
+                    </div>
+                    <div class="mt-2">
+                        <span>Custom funkcionalnosti koje ste dodali: </span>
+                        <div class="bg-white shadow rounded p-2 mt-2">
+                            <div class="flex justify-between items-center"
+                                 v-if="form.customFunkcionalnosti.length>0"
+                                 v-for="cf in form.customFunkcionalnosti">
+                                <span> {{ cf.funkcionalnost }}</span>
+                                <span class="text-2xl text-red-600 font-semibold cursor-pointer"
+                                      @click="removeCustomFunc(cf)"> - </span>
+                            </div>
+                            <span v-else>Trenutno nisu dodate custom funkcionalnosti</span>
+                        </div>
+
+                    </div>
+                    <hr>
                 </div>
-            </div>
-            <div id="funkcionalnosti" class="flex gap-10">
-                <div>
+                <div id="funkcionalnosti" class="w-full">
                     <div class="mt-3">
                         <span>Funkcionalnosti koje vec postoje u sistemu:</span>
                     </div>
-                    <div class="mt-1">
-                        <div class="flex items-center justify-between gap-4" v-for="func in existingFuncs"
-                             :key="func.id">
-                            <div class="flex flex-row-reverse gap-2">
-                                <label class="form-check-label" :for="func.funkcionalnost">
-                                    {{ func.funkcionalnost }}
-                                </label>
-                                <input
-                                    @change="toggleFunctionality(func)"
-                                    :checked="doesPackageContainFunc(func)"
+                    <div class="bg-white shadow rounded p-3 mt-2">
 
-                                    class="form-check-input border-2 border-black" type="checkbox" value=""
-                                    :id="func.funkcionalnost">
+                        <div class="mt-1 overflow-y-auto max-h-[300px]">
+                            <div class="flex items-center justify-between gap-4 " v-for="func in existingFuncs"
+                                 :key="func.id">
+                                <div class="flex flex-row-reverse gap-2">
+                                    <label class="form-check-label" :for="func.funkcionalnost">
+                                        {{ func.funkcionalnost }}
+                                    </label>
+                                    <input
+                                        @change="toggleFunctionality(func)"
+                                        :checked="doesPackageContainFunc(func)"
+
+                                        class="form-check-input border-2 border-black" type="checkbox" value=""
+                                        :id="func.funkcionalnost">
+                                </div>
                             </div>
+
                         </div>
                     </div>
-                </div>
-                <div>
-                    <div class="mt-3">
-                        <span>Custom funkcionalnosti koje ste dodali:</span>
-                    </div>
-                    <div class="mt-1">
-                        <div class="flex items-center justify-between gap-4" v-for="func in functionalities"
-                             :key="func.id">
-                            <div class="flex flex-row-reverse gap-2">
-                                <label class="form-check-label" :for="func.funkcionalnost">
-                                    {{ func.funkcionalnost }}
-                                </label>
-                                <input
-                                    @change="toggleFunctionality(func)"
-                                    :checked="doesPackageContainFunc(func)"
 
-                                    class="form-check-input border-2 border-black" type="checkbox" value=""
-                                    :id="func.funkcionalnost">
-                            </div>
-                        </div>
-                    </div>
                 </div>
-
             </div>
 
 

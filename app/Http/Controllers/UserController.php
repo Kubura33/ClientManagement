@@ -5,6 +5,7 @@
     use App\Models\Role;
     use App\Models\User;
     use Illuminate\Http\Request;
+    use Illuminate\Support\Facades\Gate;
     use Illuminate\Support\Facades\Hash;
     use Illuminate\Support\Facades\Log;
     use Inertia\Inertia;
@@ -15,12 +16,18 @@
     {
         public function create()
         {
+            if(!Gate::allows('can-access', 'korisnici')){
+                return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
+            }
             $roles = Role::all();
             return Inertia::render('Users/AddNewUser', ['roles' => $roles]);
         }
 
         public function store(Request $request)
         {
+            if(!Gate::allows('can-access', 'korisnici')){
+                return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
+            }
             $request->validate([
                 'username' => ['required', 'string', 'max:255', 'unique:users'],
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],

@@ -44,4 +44,22 @@ class Company extends Model
     {
         return $this->belongsTo(Market::class, 'trziste_id');
     }
+
+
+    //Functions
+
+    public function updateCompany(array $data)
+    {
+        // Update attributes only if they exist in the provided data
+        if (array_key_exists('ime_firme', $data)) {
+            $this->ime = $data['ime_firme'];
+        }
+        if (array_key_exists('PIB', $data)) {
+            $this->PIB = $data['PIB'];
+        }
+        if (array_key_exists('MB', $data)) {
+            $this->MB = $data['MB'];
+        }
+        $this->save();
+    }
 }
