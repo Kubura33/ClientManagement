@@ -73,7 +73,7 @@ const logout = () => {
                           class="cursor-pointer flex-grow-1 p-2 hover:bg-blue-600 rounded-md mt-1 no-underline text-current">
                         {{ trziste.ime_trzista }}
                     </Link>
-                    <Link v-if="otherCompanies && otherCompanies[trziste.id]" class="text-lg no-underline text-current" :href="route('contract.show', {id: otherCompanies[trziste.id].id})">+ {{otherCompanies[trziste.id].id}}</Link>
+                    <Link v-if="otherCompanies && otherCompanies[trziste.id]" class="text-lg no-underline text-current" :href="route('contract.show', {id: otherCompanies[trziste.id].id})">+</Link>
                 </div>
 
             </div>
