@@ -1,7 +1,6 @@
 <?php
 
-    use App\Models\Package;
-    use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -12,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('market_package', function (Blueprint $table) {
+        Schema::create('installation_log', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\Market::class, 'trziste_id');
-            $table->foreignIdFor(Package::class, 'paket_id');
+            $table->foreignIdFor(\App\Models\Contract::class, 'ugovor_id');
+            $table->date("datum_instalacije")->nullable();
+            $table->string("instalaciju_izvrsio")->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('market_package');
+        Schema::dropIfExists('installation_log');
     }
 };

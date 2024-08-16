@@ -1,6 +1,7 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+    use App\Models\Market;
+    use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -11,12 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('packages', function (Blueprint $table) {
+        Schema::create('user_market', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\Market::class, 'trziste_id');
-            $table->string('ime');;
-            $table->integer("broj_besplatnih_instalacija_godisnje");
-            $table->double('cena');
+            $table->foreignIdFor(\App\Models\User::class, 'user_id');
+            $table->foreignIdFor(Market::class, 'market_id');
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('packages');
+        Schema::dropIfExists('user_market');
     }
 };

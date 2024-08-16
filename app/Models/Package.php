@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -22,8 +23,8 @@ class Package extends Model
         return $this->belongsToMany(Functionalities::class, 'functionality_package', 'package_id', 'functionality_id');
     }
 
-    public function market() : BelongsToMany
+    public function market() : BelongsTo
     {
-        return $this->belongsToMany(Market::class, 'market_package', 'paket_id', 'trziste_id');
+        return $this->belongsTo(Market::class, 'trziste_id');
     }
 }

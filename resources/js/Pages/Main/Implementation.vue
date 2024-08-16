@@ -9,6 +9,7 @@ import {onMounted, ref, inject} from "vue";
 
 const props = defineProps({
         companies: Array,
+        market: Object,
     }
 )
 
@@ -17,7 +18,7 @@ const form = useForm({
     ime_firme: "",
     PIB: "",
     MB: "",
-
+    trziste: props.market
 })
 const setTitle = inject('setTitle')
 onMounted(() => {
@@ -30,7 +31,6 @@ const submit = () => form.get(route('search'))
 </script>
 
 <template>
-
     <div class="p-4">
         <form @submit.prevent="submit">
             <div class="w-1/4 ">

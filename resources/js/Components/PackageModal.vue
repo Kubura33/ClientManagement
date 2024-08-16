@@ -4,6 +4,7 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import {useForm} from "@inertiajs/vue3";
 import {ref} from "vue";
+import {v4 as uuidv4} from 'uuid';
 
 const props = defineProps({
     show: {
@@ -97,8 +98,6 @@ const submit = () => {
                     </div>
                     <div class="modal-body">
                         <form @submit.prevent="submit">
-                            {{ form.errors }}
-
                             <div class="">
                                 <InputLabel value="Naziv paketa"/>
                                 <TextInput
@@ -163,7 +162,7 @@ const submit = () => {
                                 <InputLabel value="Izaberite funkcionalnosti"/>
                                 <div class="bg-white shadow rounded p-4 overflow-y-auto max-h-[200px]">
                                     <div class="flex items-center justify-between gap-4" v-for="func in existingFuncs"
-                                         :key="func.id">
+                                         :key="uuidv4()">
                                         <div class="flex flex-row-reverse gap-2">
                                             <label class="form-check-label" :for="func.funkcionalnost">
                                                 {{ func.funkcionalnost }}

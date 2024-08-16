@@ -8,6 +8,10 @@ const page = usePage()
 const canAdd = computed(() => {
     return page.props.auth.user.role_id != "4"
 })
+const props = defineProps({
+    market: Object,
+})
+console.log(props.market)
 </script>
 
 <template>
@@ -16,7 +20,8 @@ const canAdd = computed(() => {
             <div>
                 <Link
                     v-if="canAdd"
-                    :href="route('novi-klijent')" class="bg-white p-6 shadow no-underline text-current">
+                    method="get"
+                    :href="route('novi-klijent.create', {id:market.id})" class="bg-white p-6 shadow no-underline text-current">
                     Novi klijent
                 </Link>
             </div>
@@ -33,7 +38,7 @@ const canAdd = computed(() => {
                 </ul>
             </div>
             <div>
-                <Link :href="route('implementirano')" class="bg-white p-6 shadow no-underline text-current">
+                <Link :href="route('implementirano', {market: market.id})" class="bg-white p-6 shadow no-underline text-current">
                     Implementirani
                 </Link>
             </div>

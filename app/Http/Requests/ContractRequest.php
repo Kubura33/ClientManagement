@@ -33,13 +33,14 @@
                 'connection' => ['required', 'max:1000'],
                 'contacts' => ['required', 'array'],
                 'implementation_status' => ['required'],
-                'date' => ['required_if:implementation_status, 3', 'date'],
+                'date' => ['required_if:implementation_status, 3', 'date', 'nullable'],
                 'godina_ugovora' => ['nullable', 'digits:4', 'integer', 'min:1900', 'max:' . date('Y')],
                 'tip_implementacije' => ['required_if:implementation_status, 3'],
                 'ugovor' => ['required', 'string'],
-                'aneks' => ['string'],
+                'aneks' => ['string', 'nullable'],
                 'tip_fakturisanja' => ['required'],
-                'iznos_fakture' => ['required']
+                'iznos_fakture' => ['required'],
+                'broj_preostalih_instalacija' => ['required'],
             ];
         }
 
@@ -64,8 +65,9 @@
                 'date.date' => 'Datum mora biti u odgovarajucem formatu',
                 'tip_implementacije.required_if' => 'Odaberite tip implementacije (Potpuno/Ceka se neka funkcionalnost)',
                 'ugovor.required' => 'Unesite broj ugovora',
-                'tip_fakturisanja' => 'Ovo polje je obavezno',
-                'iznos_fakture' => 'Iznos fakture je obavezan!'
+                'tip_fakturisanja.required' => 'Ovo polje je obavezno',
+                'iznos_fakture.required' => 'Iznos fakture je obavezan!',
+                'broj_preostalih_instalacija.required' => 'Ovo polje je obavezno'
             ];
         }
     }

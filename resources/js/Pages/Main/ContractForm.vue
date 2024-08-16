@@ -4,20 +4,23 @@ import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {useForm, usePage} from "@inertiajs/vue3";
 import {onMounted, ref, inject} from "vue";
+import {v4 as uuidv4} from 'uuid';
 import InputError from "@/Components/InputError.vue";
 import ContactModal from "@/Components/ContactModal.vue";
 import AddFunctionalityModal from "@/Components/AddFunctionalityModal.vue";
+import InstallationDateModal from "@/Components/InstallationDateModal.vue";
 
 const props = defineProps({
     packages: Array,
     statuses: Array,
     fakturisanje: Array,
     existingFunctionalities: Array,
+    market: Object,
 })
 const page = usePage()
 const chosenFunctionalities = ref([])
-const contactModal = ref(null)
 const forma = useForm({
+    trziste_id: props.market.id,
     klijent: "",
     ime_firme: "",
     PIB: "",
@@ -35,6 +38,8 @@ const forma = useForm({
     tip_fakturisanja: null,
     iznos_fakture: null,
     godina_ugovora: null,
+    broj_preostalih_instalacija: null,
+    newDates: [],
 })
 
 
@@ -43,70 +48,67 @@ const forma = useForm({
 
 //CONTACT MODAL
 const showContactModal = ref(false);
-const isEdit = ref(false)
-const contactToEdit = ref(null)
-
-const addToContacts = (newContact) => {
-    // Check if the new contact has the necessary fields
-    if (newContact.ime_prezime && (newContact.phone || newContact.email)) {
-        let isDuplicate = false;
-
-        // Loop through existing contacts to check for duplicates
-        forma.contacts.forEach(fc => {
-            // Check if fc.email or fc.email2 matches newContact.email or newContact.email2
-            // and similarly for phone and phone2, considering only non-empty values
-            if (
-                (fc.email && newContact.email && fc.email === newContact.email) ||
-                (fc.email2 && newContact.email2 && fc.email2 === newContact.email2) ||
-                (fc.phone && newContact.phone && fc.phone === newContact.phone) ||
-                (fc.phone2 && newContact.phone2 && fc.phone2 === newContact.phone2) ||
-                (fc.email && newContact.email2 && fc.email === newContact.email2) ||
-                (fc.email2 && newContact.email2 && fc.email2 === newContact.email2) ||
-                (fc.phone && newContact.phone2 && fc.phone === newContact.phone2) ||
-                (fc.phone2 && newContact.phone2 && fc.phone2 === newContact.phone2)
-            ) {
-                isDuplicate = true;
-            }
-        });
-
-        // If a duplicate is found, alert the user
-        if (isDuplicate) {
-            alert('Kontakt sa istim e-mailom ili brojem je vec unet.');
-        } else {
-            // Otherwise, add the new contact
-            forma.contacts.push(JSON.parse(JSON.stringify(newContact)));
-            closeContactModal();
-            contactModal.value.clear();
-        }
-    } else {
-        // Optionally handle the case where the new contact is missing required fields
-        alert('Molimo unesite ime i prezime i email ili telefon');
-    }
-};
-
+const contactModal = ref(null)
+const isEditContact = ref(false)
 const closeContactModal = () => {
-    isEdit.value = false
     showContactModal.value = false
+    contactModal.value.clear()
 }
-const openContactModal= () => {
-    isEdit.value = false
+const openContactModal = () => {
+    isEditContact.value = false
     showContactModal.value = true
     contactModal.value.clear()
-
 }
+const addToContacts = (newContact) => {
 
-const editContact = (contact) => {
-    contactToEdit.value = contact
-    isEdit.value = true
-    showContactModal.value = true
-}
-const changeContact = (contact) => {
-    forma.contacts.forEach( (c, index) => {
-        if(c.uniqueId === contact.uniqueId){
-            forma.contacts[index] = contact
+    if (newContact.ime_prezime && (newContact.phone || newContact.email)) {
+        const isEmailDuplicate = doesContactExist(newContact)
+
+        if (isEmailDuplicate) {
+            alert("Korisnik sa ovim email-om vec postoji");
+        }else {
+            forma.contacts.push(JSON.parse(JSON.stringify(newContact)));
+            closeContactModal();
         }
-    })
-    closeContactModal()
+
+
+    }
+
+}
+const doesContactExist = (newContact) => {
+    const isEmailDuplicate = forma.contacts.some(contact => {
+        // Ensure that we only compare if the emails are non-empty
+        const contactEmailValid = contact.email && contact.email.trim() !== "";
+        const contactEmail2Valid = contact.email2 && contact.email2.trim() !== "";
+        const newEmailValid = newContact.email && newContact.email.trim() !== "";
+        const newEmail2Valid = newContact.email2 && newContact.email2.trim() !== "";
+
+        return (
+            (contactEmailValid && newEmailValid && contact.email === newContact.email) ||
+            (contactEmailValid && newEmail2Valid && contact.email === newContact.email2) ||
+            (contactEmail2Valid && newEmailValid && contact.email2 === newContact.email) ||
+            (contactEmail2Valid && newEmail2Valid && contact.email2 === newContact.email2)
+        );
+    });
+    return isEmailDuplicate;
+}
+const contactToEdit = ref(null)
+//cTe is contactToEdit passed from v-for
+const editContact = (cTe) => {
+    contactToEdit.value = cTe
+    showContactModal.value = true
+    isEditContact.value = true
+
+
+
+}
+const finishEdittingContact = (changedContact) => {
+    const editedContact = { ...changedContact };
+    const index = forma.contacts.findIndex(c => c.id === editedContact.id);
+    if (index !== -1) {
+        forma.contacts[index] = editedContact; // Direct assignment should be reactive in Vue 3
+        closeContactModal();
+    }
 }
 //FUNCTIONALITIES
 
@@ -116,8 +118,9 @@ const setFuncs = () => {
     const selectedPackage = props.packages.find(pkg => pkg.id === forma.package)
 
     if (selectedPackage) {
-
         chosenFunctionalities.value = [...selectedPackage.functionalities]
+        forma.broj_preostalih_instalacija = selectedPackage.broj_besplatnih_instalacija_godisnje
+        forma.iznos_fakture = selectedPackage.cena
 
     }
 }
@@ -165,7 +168,26 @@ onMounted(() => {
 
 })
 
-// ROLE PERMISSIONS
+// DATUMI BESPLATNIH INSTALACIJA
+
+
+
+const showInstallationDateModal = ref(false)
+const InstallationDateModalRef = ref(null)
+const openInstallationDateModal = () => {
+    showInstallationDateModal.value = true
+}
+const closeInstallationDateModal = () => {
+    showInstallationDateModal.value = false
+    if(forma.newDates.length < 1){
+        InstallationDateModalRef.value.clear()
+    }
+}
+const addDates = (dates) => {
+    forma.newDates = dates
+    closeInstallationDateModal()
+}
+
 const submit = () => {
     forma.functionalities = chosenFunctionalities.value
     forma.post(route('novi-klijent'))
@@ -182,39 +204,25 @@ const submit = () => {
                            @saveFunctionalities="saveFunc"
                            ref="funcModal"
     ></AddFunctionalityModal>
+    <InstallationDateModal
+        :show="showInstallationDateModal"
+        :broj_instalacija="forma.broj_preostalih_instalacija"
+        @closeModal="closeInstallationDateModal"
+        @saveDates="addDates"
+        ref="InstallationDateModalRef"
+    ></InstallationDateModal>
     <ContactModal
         @addToContacts="addToContacts"
         :show="showContactModal"
         @closeModal="closeContactModal"
-        @finishEdit="changeContact"
         :contact-to-edit="contactToEdit"
-        :isEdit="isEdit"
+        :is-edit="isEditContact"
+        @finishEdit="finishEdittingContact"
         ref="contactModal"></ContactModal>
-    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
-         aria-labelledby="exampleModalCenterTitle" v-show="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    ...
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="ml-[100px]">
         <form @submit.prevent="submit">
             <div class="w-2/4 ">
                 <InputLabel for="name" value="Ime firme - grupacije/klijenta"/>
-
                 <TextInput
                     id="name"
                     type="text"
@@ -318,6 +326,7 @@ const submit = () => {
                         </div>
 
                     </div>
+                    <InputError :message="forma.errors.contacts" />
                 </div>
 
                 <div>
@@ -335,7 +344,10 @@ const submit = () => {
                         <div v-else>
                             Izaberite paket za prikaz funkcionalnosti
                         </div>
-                        <div class="flex items-center justify-between gap-4" v-for="func in chosenFunctionalities">
+                        <div class="flex items-center justify-between gap-4"
+                             v-for="func in chosenFunctionalities"
+                             :key="uuidv4()"
+                        >
                             <div class="flex flex-row-reverse gap-2">
                                 <label class="form-check-label" :for="func.funkcionalnost">
                                     {{ func.funkcionalnost }}
@@ -352,7 +364,7 @@ const submit = () => {
                                        @change="func.isDone = !func.isDone"
                                        :checked="func.isDone"
                                 >
-
+                                {{func.isDone}}
 
                             </div>
 
@@ -404,7 +416,7 @@ const submit = () => {
                         type="date"
                         class="mt-1 block w-full"
                         v-model="forma.date"
-                        required
+                        :required="forma.implementation_status == 3"
                     />
                     <InputError :message="forma.errors.date" v-if="forma.errors.date"/>
 
@@ -433,7 +445,6 @@ const submit = () => {
                         type="text"
                         class="mt-1 block w-full"
                         v-model="forma.ugovor"
-                        required
                         autocomplete="new-password"
                     />
                     <InputError :message="forma.errors.ugovor" v-if="forma.errors.ugovor"/>
@@ -448,7 +459,6 @@ const submit = () => {
                         type="text"
                         class="mt-1 block w-full"
                         v-model="forma.aneks"
-                        required
                         autocomplete="new-password"
                     />
                     <InputError :message="forma.errors.aneks" v-if="forma.errors.aneks"/>
@@ -483,6 +493,24 @@ const submit = () => {
                     <InputError :message="forma.errors.iznos_fakture" v-if="forma.errors.iznos_fakture"/>
                 </div>
 
+            </div>
+            <div id="instalacije" class="flex flex-row gap-4">
+                <div class="mt-4">
+                    <InputLabel for="bpig" value="Broj besplatnih instalacija godisnje"/>
+
+                    <TextInput
+                        id="bpig"
+                        type="text"
+                        class="mt-1 block w-full"
+                        v-model="forma.broj_preostalih_instalacija"
+                    />
+                    <InputError :message="forma.errors.ugovor" v-if="forma.errors.broj_preostalih_instalacija"/>
+
+                </div>
+
+                <div class="mt-5 flex justify-center items-center">
+                    <button class="btn btn-secondary" @click.prevent="openInstallationDateModal" :disabled="!forma.broj_preostalih_instalacija">Pogledaj listu datuma besplatnih instalacija</button>
+                </div>
             </div>
             <div class="mt-10">
                 <PrimaryButton>Zavrsi popunjavanje</PrimaryButton>

@@ -44,47 +44,22 @@ const logout = () => {
                 class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white no-underline"
             >
                 <i class="bi bi-house-door-fill"></i>
-                <span class="text-[15px] ml-4 text-gray-200 font-bold">Home</span>
+                <span class="text-[15px] ml-4 text-gray-200 font-bold">Pocetna</span>
             </Link>
-            <div
-                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white"
-                @click="dropdown"
+            <Link :href="route('trzista.index')"
+                class="p-2.5 mt-3 flex items-center text-current no-underline rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white"
             >
                 <i class="bi bi-flag-fill"></i>
                 <div class="flex justify-between w-full items-center">
                     <span class="text-[15px] ml-4 text-gray-200 font-bold">Trzista</span>
-                    <span :class="{'rotate-180': showDropdown, 'rotate-0': !showDropdown}" @click="toggleDropdown"
-                          class="text-sm transition-transform duration-300">
-                        <i class="bi bi-chevron-down"></i>
-                </span>
                 </div>
-            </div>
-            <div
-                v-show="showDropdown"
-                class="text-left text-sm mt-2 w-4/5 mx-auto text-gray-200 font-bold flex flex-col gap-2"
-                id="submenu"
-            >
-                <div class=" flex items-center" v-for="trziste in trzista"
-                     :key="trziste.id">
-                    <Link
-                          :href="route('index', {id: trziste.id})"
-                          @click="trenutnoTrziste=trziste.id"
-                          :class="trenutnoTrziste == trziste.id ? 'bg-blue-600' : ''"
-                          class="cursor-pointer flex-grow-1 p-2 hover:bg-blue-600 rounded-md mt-1 no-underline text-current">
-                        {{ trziste.ime_trzista }}
-                    </Link>
-                    <Link v-if="otherCompanies && otherCompanies[trziste.id]" class="text-lg no-underline text-current" :href="route('contract.show', {id: otherCompanies[trziste.id].id})">+</Link>
-                </div>
-
-            </div>
-            <Link
-                v-if="role == 1"
-                :href="route('paket.create')"
-                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white no-underline"
-            >
-                <i class="bi bi-box-fill"></i>
-                <span class="text-[15px] ml-4 text-gray-200 font-bold">Paketi</span>
             </Link>
+
+
+
+<!--                    <Link v-if="otherCompanies && otherCompanies[trziste.id]" class="text-lg no-underline text-current" :href="route('contract.show', {id: otherCompanies[trziste.id].id})">+</Link>-->
+
+
             <Link
                 v-if="role === 1"
                 :href="route('dodaj-korisnika')"

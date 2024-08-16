@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(\App\Models\Role::class, 'role_id');
             $table->string('username');
-            $table->string('email')->unique();
             $table->string('password');
             $table->timestamps();
         });

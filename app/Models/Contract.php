@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\ContractObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,19 +14,7 @@ class Contract extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'fakturisanje_id',
-        'firma_id',
-        'status_id',
-        'paket_id',
-        'funkcionalnosti',
-        'broj_aneksa',
-        'broj_ugovora',
-        'godina_ugovora',
-        'datum_implementacije',
-        'iznos_fakture'
-
-    ];
+    protected $guarded = [];
 
     public function invoicing() : BelongsTo
     {

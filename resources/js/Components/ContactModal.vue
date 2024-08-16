@@ -3,7 +3,7 @@
 
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
-import {reactive, watch} from "vue";
+import {reactive, ref, watch} from "vue";
 
 const props = defineProps({
     show: {
@@ -19,37 +19,37 @@ const props = defineProps({
 
 })
 const newContact = reactive({
-    ime_prezime: props.contactToEdit?.name ?? props.contactToEdit?.ime_prezime ?? "",
-    email: props.contactToEdit?.email ?? "",
-    email2: props.contactToEdit?.email2 ?? "",
-    phone: props.contactToEdit?.phone ?? "",
-    phone2: props.contactToEdit?.phone2 ?? ""
-});
+    id: "",
+    ime_prezime: "",
+    email: "",
+    email2: "",
+    phone: "",
+    phone2:  "",
+})
 const clear = () => {
+    newContact.id = "";
     newContact.ime_prezime = "";
-    newContact.uniqueId = Math.random().toString(36);
     newContact.email = "";
     newContact.email2 = "";
     newContact.phone = "";
     newContact.phone2 = "";
 };
-// Watch for changes to props.contactToEdit and update newContact accordingly
 watch(() => props.contactToEdit, (newVal) => {
     if (newVal) {
-        newContact.id = newVal.id ?? ""
-        if(newVal.uniqueId){
-            newContact.uniqueId = newVal.uniqueId
-        }
-        newContact.ime_prezime = newVal.name ?? newVal.ime_prezime ?? "";
-        newContact.email = newVal.email ?? "";
-        newContact.email2 = newVal.email2 ?? "";
-        newContact.phone = newVal.phone ?? "";
-        newContact.phone2 = newVal.phone2 ?? "";
-    } else {
-        clear();
-    }
-}, { immediate: true });
+        // Create a copy of newVal
+        const copiedContact = {
+            id: newVal.id || "",
+            ime_prezime: newVal.ime_prezime || "",
+            email: newVal.email || "",
+            email2: newVal.email2 || "",
+            phone: newVal.phone || "",
+            phone2: newVal.phone2 || ""
+        };
 
+        // Assign the copiedContact to newContact
+        Object.assign(newContact, copiedContact);
+    }
+}, {immediate: true})
 const emit = defineEmits(['addToContacts', 'finishEdit'])
 const handleClick = () => {
 
@@ -60,6 +60,7 @@ const handleClick = () => {
 
     }
 };
+
 defineExpose({
     clear
 })

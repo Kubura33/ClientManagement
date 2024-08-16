@@ -25,19 +25,15 @@
 
             User::insert([
                 ['role_id' => 1,
-                    'email' => 'superadmin@example.com',
                     'username' => 'Super Admin',
                     'password' => Hash::make('password')],
                 ['role_id' => 2,
-                    'email' => 'admin@example.com',
                     'username' => 'Obican Admin',
                     'password' => Hash::make('password')],
                 ['role_id' => 3,
-                    'email' => 'b2b@example.com',
                     'username' => 'B2B Agent',
                     'password' => Hash::make('password')],
                 ['role_id' => 4,
-                    'email' => 'user@example.com',
                     'username' => 'User',
                     'password' => Hash::make('password')],
             ]);
@@ -63,68 +59,71 @@
                 ['naziv_fakturisanja' => 'Sest meseci'],
                 ['naziv_fakturisanja' => 'Godina']
             ]);
+            $market = Market::where('ime_trzista', "Srbija")->first();
             Package::insert(
                 [
                     [
                         'ime' => 'Basic',
-                        'cena' => '39',
-                        'broj_besplatnih_instalacija_godisnje' => 1
+                        'broj_besplatnih_instalacija_godisnje' => 1,
+                        'cena' => 39,
+                        'trziste_id' => $market->id
                     ],
                     [
                         'ime' => 'Light',
-                        'cena' => '49',
-                        'broj_besplatnih_instalacija_godisnje' => 2
+                        'broj_besplatnih_instalacija_godisnje' => 2,
+                        'cena' => 49,
+                        'trziste_id' => $market->id
                     ],
                     [
                         'ime' => 'Pro',
-                        'cena' => '59',
-                        'broj_besplatnih_instalacija_godisnje' => 3
+                        'broj_besplatnih_instalacija_godisnje' => 3,
+                        'cena' => 59,
+                        'trziste_id' => $market->id
                     ],
                     [
                         'ime' => 'Premium',
-                        'cena' => '69',
-                        'broj_besplatnih_instalacija_godisnje' => 4
+                        'broj_besplatnih_instalacija_godisnje' => 4,
+                        'cena' => 69,
+                        'trziste_id' => $market->id
                     ],
                     [
                         'ime' => 'Platinum',
-                        'cena' => '99',
-                        'broj_besplatnih_instalacija_godisnje' => 5
+                        'broj_besplatnih_instalacija_godisnje' => 5,
+                        'cena' => 99,
+                        'trziste_id' => $market->id
                     ]
 
                 ]
             );
+
             Functionalities::insert([
-                ['funkcionalnost' => 'Automatsko osvežavanje podataka'],
-                ['funkcionalnost' => 'Automatski eksport izvoda (txt, xml i mt490 format)'],
-                ['funkcionalnost' => 'Automatski eksport izvoda u PDF formatu'],
-                ['funkcionalnost' => 'Automatski import naloga'],
-                ['funkcionalnost' => 'Automatski eksport dnevnih uplata'],
-                ['funkcionalnost' => 'Automatski eksport stanja'],
-                ['funkcionalnost' => 'Automatski eksport kursnih lista'],
-                ['funkcionalnost' => 'Automatsko razvrstavanje izvoda'],
-                ['funkcionalnost' => 'Kriptovani automatski import naloga'],
-                ['funkcionalnost' => 'Zaključavanje naloga'],
-                ['funkcionalnost' => 'Email notifikacije o prilivima'],
-                ['funkcionalnost' => 'Excel izveštaj o prometu i stanju po računima'],
-                ['funkcionalnost' => 'Automatsko potpisivanje naloga'],
-                ['funkcionalnost' => 'Automatsko slanje potpisanih naloga'],
-                ['funkcionalnost' => 'Integracija sa Web Service-om / API-jem'],
-                ['funkcionalnost' => 'Zaključvanje odredjenih polja po nalogu'],
-                ['funkcionalnost' => 'Email notifikacije o izvodima i stanjima'],
+                ['funkcionalnost' => 'Automatsko osvežavanje podataka', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatski eksport izvoda (txt, xml i mt490 format)', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatski eksport izvoda u PDF formatu', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatski import naloga', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatski eksport dnevnih uplata', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatski eksport stanja', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatski eksport kursnih lista', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatsko razvrstavanje izvoda', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Kriptovani automatski import naloga', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Zaključavanje naloga', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Email notifikacije o prilivima', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Excel izveštaj o prometu i stanju po računima', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatsko potpisivanje naloga', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Automatsko slanje potpisanih naloga', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Integracija sa Web Service-om / API-jem', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Zaključvanje odredjenih polja po nalogu', 'trziste_id' => $market->id],
+                ['funkcionalnost' => 'Email notifikacije o izvodima i stanjima', 'trziste_id' => $market->id],
             ]);
             Package::where('ime', 'Basic')->first()->functionalities()->attach([1, 2]);
             Package::where('ime', 'Light')->first()->functionalities()->attach([1, 2, 3, 4]);
             Package::where('ime', 'Pro')->first()->functionalities()->attach([1, 2, 3, 4, 5, 6, 7]);
             Package::where('ime', 'Premium')->first()->functionalities()->attach([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
+
             foreach (Functionalities::all() as $functionality) {
                 Package::where('ime', 'Platinum')->first()->functionalities()->attach([$functionality->id]);
             }
-            Package::where('ime', 'Basic')->first()->market()->attach([1, 2, 3]);
-            Package::where('ime', 'Light')->first()->market()->attach([1, 2, 3]);
-            Package::where('ime', 'Pro')->first()->market()->attach([1, 2, 3]);
-            Package::where('ime', 'Premium')->first()->market()->attach([1, 2, 3]);
-            Package::where('ime', 'Platinum')->first()->market()->attach([1, 2, 3]);
 
 
         }

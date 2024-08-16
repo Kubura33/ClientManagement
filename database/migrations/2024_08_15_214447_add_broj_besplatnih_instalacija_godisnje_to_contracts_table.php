@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('clients', function (Blueprint $table) {
-            $table->id();
-            $table->string('ime')->unique()->nullable();
-            $table->timestamps();
+        Schema::table('contracts', function (Blueprint $table) {
+            $table->integer('broj_besplatnih_instalacija_godisnje')->nullable();
         });
     }
 
@@ -23,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('clients');
+
+            Schema::dropColumns('contracts',['broj_besplatnih_instalacija_godisnje']);
+
     }
 };

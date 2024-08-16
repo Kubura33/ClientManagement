@@ -16,7 +16,7 @@ const user = usePage().props.auth.user;
 
 const form = useForm({
     username: user.username,
-    email: user.email,
+
 });
 const roleToString = computed(() => {
     if (user.role_id == 1) {
@@ -59,20 +59,6 @@ const roleToString = computed(() => {
                 <InputError class="mt-2" :message="form.errors.username"/>
             </div>
 
-            <div>
-                <InputLabel for="email" value="Email"/>
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email"/>
-            </div>
             <div>
                 <InputLabel for="" value="Tip korisnika"/>
 

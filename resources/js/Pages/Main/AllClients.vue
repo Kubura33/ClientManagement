@@ -4,25 +4,23 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {router, useForm} from "@inertiajs/vue3";
-import {onMounted, ref, inject} from 'vue'
 import InputError from "@/Components/InputError.vue";
-
+import {onMounted, ref, inject} from "vue";
 
 const props = defineProps({
         companies: Array,
-        filter: Number
-
     }
 )
-const title = ref("")
+
 const form = useForm({
     klijent: "",
     ime_firme: "",
     PIB: "",
     MB: "",
 
-})
 
+})
+const title = ref("");
 const goToContract = (companyId) => {
     router.get(route('contract.show', {id: companyId}))
 }
@@ -35,16 +33,14 @@ onMounted(() => {
         title.value = " - Ceka se neka funkcionalnost"
     }else if(props.filter == 3){
         title.value = " - Ne javljalju se"
-    }else if(props.filter == 4){
-        title.value = " - Svi klijenti"
     }
     setTitle(title.value)
 
 })
-
 </script>
 
 <template>
+
     <div class="p-4">
         <form @submit.prevent="submit">
             <div class="w-1/4 ">
@@ -112,6 +108,7 @@ onMounted(() => {
 
 
         </form>
+
         <div class="bg-white shadow mt-6 w-2/4  p-4 flex flex-col gap-4">
             <table class="table table-hover" v-if="companies.length>0">
                 <thead>
@@ -119,17 +116,18 @@ onMounted(() => {
                     <th scope="col">Ime firme</th>
                     <th scope="col">PIB</th>
                     <th scope="col">MB</th>
-                    <th scope="col" >Status</th>
+                    <th scope="col">Status</th>
                     <th scope="col">Trziste</th>
+
                 </tr>
                 </thead>
                 <tbody>
                 <tr @dblclick="goToContract(company.id)" v-for="company in companies" class="cursor-pointer">
-                    <th scope="row"> {{ company.ime }}</th>
-                    <td> {{ company.PIB }}</td>
-                    <td>{{ company.MB }}</td>
+                    <th scope="row"> {{company.ime }} </th>
+                    <td> {{company.PIB}} </td>
+                    <td>{{company.MB}}</td>
                     <td>{{ company.status }}</td>
-                    <td>{{ company.market.ime_trzista }}</td>
+                    <td>{{company.market.ime_trzista}}</td>
                 </tr>
                 </tbody>
             </table>

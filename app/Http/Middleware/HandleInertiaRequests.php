@@ -35,7 +35,9 @@
                 'auth' => [
                     'user' => $request->user(),
                 ],
-                'trziste' => session('trziste') ? session('trziste') : null,
+                'user' => [
+                    'markets' => $request->user() ? $request->user()->markets : null,
+                ],
                 'flash' => [
                     'success' => $request->session()->get('success'),
                     'error' => $request->session()->get('error'),

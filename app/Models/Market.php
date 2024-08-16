@@ -17,9 +17,18 @@ class Market extends Model
         return $this->hasMany(Company::class, 'trziste_id');
     }
 
+    public function functionalities() : HasMany
+    {
+        return $this->hasMany(Functionalities::class, 'trziste_id');
+    }
+
     public function packages() : BelongsToMany
     {
         return $this->belongsToMany(Package::class, 'market_package', 'trziste_id', 'paket_id');
     }
 
+    public function users() : BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_market', 'market_id', 'user_id');
+    }
 }

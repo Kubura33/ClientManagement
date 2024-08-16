@@ -10,61 +10,53 @@
     use Illuminate\Support\Facades\Gate;
     use Illuminate\Validation\Rule;
     use Inertia\Inertia;
+    use Inertia\Response;
 
     class PackageController extends Controller
     {
-        public function create()
+        public function create(Market $market)
         {
-            if(!Gate::allows('can-access', 'paketi')){
+            if (!Gate::allows('can-access', 'paketi')) {
                 return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
             }
             $markets = Market::all();
             $packages = Package::with(['functionalities', 'market'])->get();
-            $existing_funcs = Functionalities::all();
+            $existing_funcs = $market->functionalities;
             return Inertia::render('Package/Package', [
                 'packages' => $packages,
                 'markets' => $markets,
-                'existingFuncs' => $existing_funcs
+                'existingFuncs' => $existing_funcs,
+                'chosenMarket' => $market,
             ]);
         }
 
         public function store(Request $request)
         {
-            if(!Gate::allows('can-access', 'paket')){
+            if (!Gate::allows('can-access', 'paket')) {
                 return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
             }
             $request->validate([
                 'ime_paketa' => ['required', 'string', 'max:255', Rule::unique('packages', 'ime')],
                 'cena' => ['required', 'numeric'],
-                'broj_besplatnih_instalacija_godisnje' => ['required', 'numeric'],
-                'funkcionalnosti' => ['required', 'array'],
-                'customFunkcionalnosti' => ['array'],
-                'trzista' => ['required']
+                'broj_big' => ['required', 'numeric'],
+                'trziste' => ['required']
             ]);
+            $packageExists = DB::table('packages')
+                ->whereRaw('LOWER(ime) = ? AND trziste_id = ?', [strtolower($request->ime_paketa), $request->trziste['id']])
+                ->first();
+            if($packageExists){
+                return redirect()->back()->with('error', "Paket sa ovim imenom na ovom trzistu vec postoji");
+            }
             try {
                 DB::transaction(function () use ($request) {
                     $package = Package::create([
+                        'trziste_id' => $request->trziste['id'],
                         'ime' => $request->ime_paketa,
                         'cena' => $request->cena,
-                        'broj_besplatnih_instalacija_godisnje' => $request->broj_besplatnih_instalacija_godisnje ?? 0,
+                        'broj_besplatnih_instalacija_godisnje' => $request->broj_big ?? 0,
                     ]);
 
-                    foreach ($request->funkcionalnosti as $funk) {
-                        if (isset($funk['id'])) {
-                            $package->functionalities()->attach($funk['id']);
-                        }
-                    }
-                    foreach ($request->customFunkcionalnosti as $cf){
-                        $func = Functionalities::create([
-                            'funkcionalnost' => $cf['funkcionalnost'],
-                        ]);
-                        $package->functionalities()->attach($func->id);
-                    }
-                    foreach ($request->trzista as $trziste) {
-                        if (isset($trziste['id'])) {
-                            Market::where('id', $trziste['id'])->first()->packages()->attach($package->id);
-                        }
-                    }
+
                 });
 
                 return redirect()->back()->with('success', 'Paket je uspesno dodat');
@@ -77,18 +69,26 @@
 
         }
 
+        public function edit(Market $market)
+        {
+            return Inertia::render('Package/EditPackage', [
+                'market' => $market,
+                'packages' => Package::with(['functionalities', 'market'])->get(),
+                'existingFuncs' => Functionalities::all(),
+            ]);
+        }
+
         public function update(Request $request, Package $package)
         {
-            if(!Gate::allows('can-access', 'paket')){
+            if (!Gate::allows('can-access', 'paket')) {
                 return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
             }
             $request->validate([
-               'ime_paketa' => ['required', 'string', 'max:255', Rule::unique('packages', 'ime')->ignore($package->id)],
-               'cena_paketa' => ['required', 'numeric'],
-               'broj_big' => ['numeric'],
+                'ime_paketa' => ['required', 'string', 'max:255', Rule::unique('packages', 'ime')->ignore($package->id)],
+                'cena_paketa' => ['required', 'numeric'],
+                'broj_big' => ['numeric'],
                 'funkcionalnosti' => ['required', 'array'],
-                'customFunkcionalnosti' => ['array'],
-                'trzista' => ['required']
+                'trziste' => ['required']
             ]);
             $package->update([
                 'ime' => $request->ime_paketa,
@@ -102,19 +102,12 @@
                     $package->functionalities()->attach($funk['id']);
                 }
             }
-            foreach ($request->customFunkcionalnosti as $cf) {
-                $func = Functionalities::create([
-                    'funkcionalnost' => $cf['funkcionalnost'],
-                ]);
-                $package->functionalities()->attach($func->id);
-            }
-            $package->market()->detach();
-            foreach ($request->trzista as $trziste) {
-                if (isset($trziste['id'])) {
-                    $package->market()->attach($trziste['id']);
-                }
-            }
+            dd($request->trziste['id']);
+            $package->market()->attach($request->trziste['id']);
+
             $package->save();
             return redirect()->back()->with('success', 'Paket je uspesno sacuvan');
         }
+
+
     }

@@ -3,23 +3,25 @@
     namespace App\Http\Controllers;
 
     use App\Models\Company;
+    use App\Models\Market;
     use Illuminate\Http\Request;
     use Inertia\Inertia;
 
     class ImplementationController extends Controller
     {
-        public function index()
+        public function index(Market $market)
         {
-            $trziste = session('trziste');
+            $trziste = $market->id;
             if ($trziste) {
-                //Refaktorisi da vraca samo ugovore sa statusom implementirano
                 $companies = Company::with('market')
                     ->where('trziste_id', $trziste)
                     ->whereHas('contract', function ($query) {
                         return $query->where('status_id', 3);
                     })
                     ->get();
-                return Inertia::render('Main/Implementation', ['companies' => $companies]);
+                return Inertia::render('Main/Implementation', [
+                    'companies' => $companies,
+                    'market' => $trziste]);
             }
             return redirect()->route('dashboard');
 
@@ -35,7 +37,7 @@
                 'MB' => ['string', 'size:8', 'nullable']
             ]);
             $query = Company::query();
-
+            $query->where('trziste_id', $request->trziste);
             // Apply filters conditionally
             if ($request->filled('ime_firme')) {
                 $query->where('ime', $request->ime_firme);
@@ -56,6 +58,10 @@
                 })
                 ->with('market')->get();
 
-            return Inertia::render('Main/Implementation', ['companies' => $companies]);
+            return Inertia::render('Main/Implementation', [
+                'companies' => $companies,
+                'market' => $request->trziste
+
+            ]);
         }
     }

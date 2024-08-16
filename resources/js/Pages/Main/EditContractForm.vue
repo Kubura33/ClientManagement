@@ -2,11 +2,13 @@
 import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
-import {useForm, usePage} from "@inertiajs/vue3";
+import {router, useForm, usePage} from "@inertiajs/vue3";
 import {computed, inject, onMounted, ref} from "vue";
+import {v4 as uuidv4} from 'uuid';
 import InputError from "@/Components/InputError.vue";
 import ContactModal from "@/Components/ContactModal.vue";
 import AddFunctionalityModal from "@/Components/AddFunctionalityModal.vue";
+import InstallationDateModal from "@/Components/InstallationDateModal.vue";
 
 const props = defineProps({
     packages: Array,
@@ -15,6 +17,8 @@ const props = defineProps({
     contract: Object,
     existingFunctionalities: Array,
     otherContracts: Array,
+    market: Object,
+    datumiBesplatnihInstalacija: Array,
 })
 const page = usePage()
 const chosenFunctionalities = ref(props.contract ? [...props.contract.functionalities] : [])
@@ -29,13 +33,17 @@ const forma = useForm({
     customFunctionalities: [],
     connection: props.contract?.company ? props.contract.company.connection.konekcija : "null",
     implementation_status: props.contract ? props.contract.status_id : null,
-    tip_implementacije: props.contract ? props.contract.status_implementiranja : null,
+    tip_implementacije: props.contract.status_implementiranja ? props.contract.status_implementiranja : null,
     date: props.contract ? props.contract.datum_implementacije : null,
     ugovor: props.contract ? props.contract.broj_ugovora : "",
     godina_ugovora: props.contract ? props.contract.godina_ugovora : "",
     aneks: props.contract ? props.contract.broj_aneksa : "",
     tip_fakturisanja: props.contract ? props.contract.fakturisanje_id : null,
-    iznos_fakture: props.contract ? props.contract.iznos_fakture : null
+    iznos_fakture: props.contract ? props.contract.iznos_fakture : null,
+    broj_preostalih_instalacija: props.contract ? props.contract.broj_preostalih_instalacija : null,
+    broj_besplatnih_instalacija_godisnje: props.contract ? props.contract.broj_besplatnih_instalacija_godisnje : null,
+    datumi_besplatnih_instalacija: props.datumiBesplatnihInstalacija ? props.datumiBesplatnihInstalacija : [],
+    newDates: [],
 })
 
 
@@ -55,9 +63,11 @@ const openContactModal = () => {
 const addToContacts = (newContact) => {
 
     if (newContact.ime_prezime && (newContact.phone || newContact.email)) {
-        if(forma.contacts.some(c => (c.email === newContact.email || c.email2 === newContact.email || c.email2 === newContact.email2))){
-            alert("Korisnik sa ovim e-mailom vec postoji")
-        }else{
+        const isEmailDuplicate = doesContactExist(newContact)
+
+        if (isEmailDuplicate) {
+            alert("Korisnik sa ovim email-om vec postoji");
+        }else {
             forma.contacts.push(JSON.parse(JSON.stringify(newContact)));
             closeContactModal();
         }
@@ -66,17 +76,43 @@ const addToContacts = (newContact) => {
     }
 
 }
+const doesContactExist = (newContact) => {
+    const isEmailDuplicate = forma.contacts.some(contact => {
+        // Ensure that we only compare if the emails are non-empty
+        const contactEmailValid = contact.email && contact.email.trim() !== "";
+        const contactEmail2Valid = contact.email2 && contact.email2.trim() !== "";
+        const newEmailValid = newContact.email && newContact.email.trim() !== "";
+        const newEmail2Valid = newContact.email2 && newContact.email2.trim() !== "";
 
+        return (
+            (contactEmailValid && newEmailValid && contact.email === newContact.email) ||
+            (contactEmailValid && newEmail2Valid && contact.email === newContact.email2) ||
+            (contactEmail2Valid && newEmailValid && contact.email2 === newContact.email) ||
+            (contactEmail2Valid && newEmail2Valid && contact.email2 === newContact.email2)
+        );
+    });
+    return isEmailDuplicate;
+}
 const contactToEdit = ref(null)
 //cTe is contactToEdit passed from v-for
 const editContact = (cTe) => {
+    if(canEdit("kontakti")){
+        return
+    }
     contactToEdit.value = cTe
     showContactModal.value = true
     isEditContact.value = true
 
+
+
 }
 const finishEdittingContact = (changedContact) => {
-    console.log(changedContact);
+    const editedContact = { ...changedContact };
+    const index = forma.contacts.findIndex(c => c.id === editedContact.id);
+    if (index !== -1) {
+        forma.contacts[index] = editedContact; // Direct assignment should be reactive in Vue 3
+        closeContactModal();
+    }
 }
 //FUNCTIONALITIES
 
@@ -117,9 +153,9 @@ const closeFunctionalityModal = () => {
         funcModal.value.reset()
     }
 }
-const isChecked =() => computed((func) => {
+const isChecked = (func) => {
     return chosenFunctionalities.value.some(cf => cf.funkcionalnost.toLowerCase() === func.funkcionalnost.toLowerCase())
-})
+}
 const openFunctionalityModal = () => {
     showFunctionalityModal.value = true
     if (funcModal.value) {
@@ -142,19 +178,59 @@ const saveFunc = (checkedFunctionalities, customFunc) => {
 const canEdit = (field) => {
     const perms = {
         1: ['klijent', 'ime_firme', 'PIB', 'MB', 'paket', 'kontakti', 'funkcionalnosti', 'custom_funkcionalnosti', 'konekcija', 'status_implementacije', 'datum_implementacije', 'godina_ugovora', 'ugovor', 'aneks', 'tip_fakturisanja', 'iznos_fakture'],
-        2: ['ime_firme', 'paket', 'kontakti', 'funkcionalnosti', 'custom_funkcionalnosti', 'konekcija', 'status_implementacije', 'ugovor', 'aneks', 'tip_fakturisanja', 'iznos_fakture'],
-        3: ['kontakti', 'konekcija', 'custom_funkcionalnosti'],
+        2: ['ime_firme', 'paket', 'kontakti', 'funkcionalnosti', 'custom_funkcionalnosti', 'konekcija', 'status_implementacije', 'ugovor', 'aneks', 'tip_fakturisanja', 'iznos_fakture', 'datum_instalacije'],
+        3: ['kontakti', 'konekcija', 'custom_funkcionalnosti', 'datum_instalacije'],
         4: []
     }
-    return !perms[page.props.auth.user.role_id]?.includes(field)
+    const userHasMarket = hasMarket.value; // Access computed value
+    if (page.props.auth.user.role_id === 1) {
+        return false; // Role 1 has full access
+    } else {
+        return !userHasMarket || !perms[page.props.auth.user.role_id]?.includes(field);
+    }
+
+}
+
+//Datumi besplatnih instalacija
+
+
+const showInstallationDateModal = ref(false)
+const InstallationDateModalRef = ref(null)
+const openInstallationDateModal = () => {
+    showInstallationDateModal.value = true
+}
+const closeInstallationDateModal = () => {
+    showInstallationDateModal.value = false
+    if (forma.newDates.length < 1) {
+        InstallationDateModalRef.value.clear()
+    }
+}
+const addDates = (dates) => {
+    forma.newDates = dates
+    closeInstallationDateModal()
 }
 const submit = () => {
     forma.functionalities = chosenFunctionalities.value
-    forma.post(route('contract.update', {contract: props.contract.id}))
+    forma.post(route('contract.update', {contract: props.contract.id}), {
+
+        onSuccess: () => {
+            router.reload({
+                only: ['contract']
+            })
+        },
+        preserveState: false
+
+    })
 }
 //Other companies
 
 const setOtherCompanies = inject('setOtherCompanies')
+const hasMarket = computed(() => {
+    if (page.props.auth.user.role_id === 1) {
+        return true; // Admin role always has access
+    }
+    return page.props.user.markets.some( m => m.id == props.market.id);
+});
 
 onMounted(() => {
     setOtherCompanies(props.otherContracts)
@@ -162,6 +238,15 @@ onMounted(() => {
 </script>
 
 <template>
+    <InstallationDateModal
+        :show="showInstallationDateModal"
+        :current-dates="forma.datumi_besplatnih_instalacija"
+        :broj_instalacija="forma.broj_preostalih_instalacija"
+        @closeModal="closeInstallationDateModal"
+        @saveDates="addDates"
+        :can-edit="canEdit('datum_instalacije')"
+        ref="InstallationDateModalRef"
+    ></InstallationDateModal>
     <AddFunctionalityModal :show="showFunctionalityModal"
                            @closeModal="closeFunctionalityModal"
                            :existingFunctionalities="existingFunctionalities"
@@ -174,12 +259,12 @@ onMounted(() => {
         @addToContacts="addToContacts"
         :show="showContactModal"
         @closeModal="closeContactModal"
-        :is-edit="isEditContact"
         :contact-to-edit="contactToEdit"
+        :is-edit="isEditContact"
         @finishEdit="finishEdittingContact"
-                  ref="contactModal"></ContactModal>
-    <div class="pl-6">
-        <form @submit.prevent="submit" class="">
+        ref="contactModal"></ContactModal>
+    <div class="pl-6" >
+        <form @submit.prevent="submit" :class="{'disabled-form' : !hasMarket}">
             <div class="w-full ">
                 <InputLabel for="name" value="Ime firme - grupacije/klijenta"/>
 
@@ -188,7 +273,7 @@ onMounted(() => {
                     type="text"
                     class="mt-1 block w-2/4"
                     v-model="forma.klijent"
-                    :disabled = "canEdit('klijent')"
+                    :disabled="canEdit('klijent')"
                     :class="{'cursor-not-allowed' : canEdit('klijent')}"
 
                 />
@@ -204,7 +289,7 @@ onMounted(() => {
                         type="text"
                         class="mt-1 block w-full"
                         v-model="forma.ime_firme"
-                        :disabled = "canEdit('ime_firme')"
+                        :disabled="canEdit('ime_firme')"
                         :class="{'cursor-not-allowed' : canEdit('ime_firme')}"
                         required
 
@@ -222,7 +307,7 @@ onMounted(() => {
                         v-model="forma.PIB"
                         maxlength="9"
                         required
-                        :disabled = "canEdit('PIB')"
+                        :disabled="canEdit('PIB')"
                         :class="{'cursor-not-allowed' : canEdit('PIB')}"
 
                     />
@@ -238,7 +323,7 @@ onMounted(() => {
                         class="mt-1 block w-full"
                         v-model="forma.MB"
                         maxlength="8"
-                        :disabled = "canEdit('MB')"
+                        :disabled="canEdit('MB')"
                         :class="{'cursor-not-allowed' : canEdit('MB')}"
 
                     />
@@ -247,12 +332,11 @@ onMounted(() => {
                 </div>
                 <div class="mt-4">
                     <InputLabel for="paket" value="Paket"/>
-
                     <select
                         id="paket"
                         class="form-select h-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1"
                         aria-label="Default select example"
-                        :disabled = "canEdit('paket')"
+                        :disabled="canEdit('paket')"
                         :class="{'cursor-not-allowed' : canEdit('paket')}"
                         v-model="forma.package"
                         @change="setFuncs"
@@ -315,7 +399,10 @@ onMounted(() => {
                         <div v-else>
                             Izaberite paket za prikaz funkcionalnosti
                         </div>
-                        <div class="flex items-center justify-between gap-4" v-for="func in chosenFunctionalities">
+                        <div class="flex items-center justify-between gap-4"
+                             v-for="func in chosenFunctionalities"
+                             :key="uuidv4()"
+                        >
                             <div class="flex flex-row-reverse gap-2">
                                 <label class="form-check-label" :for="func.funkcionalnost">
                                     {{ func.funkcionalnost }}
@@ -335,7 +422,6 @@ onMounted(() => {
                                        :disabled="canEdit('funkcionalnosti')"
 
                                 >
-
 
                             </div>
 
@@ -376,14 +462,16 @@ onMounted(() => {
                 </div>
                 <div v-if="forma.implementation_status === 3" class="mt-10 flex flex-col gap-2">
                     <div class="flex gap-2 items-center">
-                        <label for="">Potpuno</label>
+                        <label for="potpuno">Potpuno</label>
                         <input
+                            id="potpuno"
                             :disabled="canEdit('status_implementacije')"
                             v-model="forma.tip_implementacije" type="radio" value="Potpuno">
                     </div>
                     <div class="flex gap-2 items-center">
-                        <label for="">Čeka se neka funkcionalnost</label>
+                        <label for="cekanje">Čeka se neka funkcionalnost</label>
                         <input type="radio"
+                               id="cekanje"
                                :disabled="canEdit('status_implementacije')"
                                v-model="forma.tip_implementacije" value="Čeka se neka funkcionalnost">
                     </div>
@@ -432,7 +520,6 @@ onMounted(() => {
                         required
                         :disabled="canEdit('ugovor')"
                         :class="{'cursor-not-allowed' : canEdit('ugovor')}"
-                        autocomplete="new-password"
                     />
                     <InputError :message="forma.errors.ugovor" v-if="forma.errors.ugovor"/>
 
@@ -446,7 +533,6 @@ onMounted(() => {
                         type="text"
                         class="mt-1 block w-full"
                         v-model="forma.aneks"
-                        required
                         :disabled="canEdit('aneks')"
                         :class="{'cursor-not-allowed' : canEdit('aneks')}"
                     />
@@ -488,7 +574,40 @@ onMounted(() => {
                 </div>
 
             </div>
-            <div class="mt-10" v-show="$page.props.auth.user.role_id != 4">
+            <div id="instalacije" class="flex flex-row gap-4">
+                <div class="mt-4">
+                    <InputLabel for="broj_besplatnih_instalacija_godisnje" value="Broj besplatnih instalacija godisnje"/>
+
+                    <TextInput
+                        id="broj_besplatnih_instalacija_godisnje"
+                        type="text"
+                        class="mt-1 block w-full"
+                        v-model="forma.broj_besplatnih_instalacija_godisnje"
+
+                    />
+                    <InputError :message="forma.errors.ugovor" v-if="forma.errors.broj_besplatnih_instalacija_godisnje"/>
+
+                </div>
+                <div class="mt-4">
+                    <InputLabel for="bpig" value="Broj PREOSTALIH besplatnih instalacija godisnje"/>
+
+                    <TextInput
+                        id="bpig"
+                        type="text"
+                        class="mt-1 block w-full"
+                        v-model="forma.broj_preostalih_instalacija"
+                        disabled
+                    />
+                    <InputError :message="forma.errors.ugovor" v-if="forma.errors.broj_preostalih_instalacija"/>
+
+                </div>
+                <div class="mt-5 flex justify-center items-center">
+                    <button class="btn btn-secondary" @click.prevent="openInstallationDateModal">Lista datuma besplatnih
+                        instalacija
+                    </button>
+                </div>
+            </div>
+            <div class="mt-10 finish-button" v-show="$page.props.auth.user.role_id != 4">
                 <PrimaryButton>Zavrsi popunjavanje</PrimaryButton>
             </div>
 
@@ -499,5 +618,11 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
+
+
+.disabled-form .finish-button {
+    display: none;
+}
 
 </style>

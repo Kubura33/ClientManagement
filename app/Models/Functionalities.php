@@ -22,4 +22,9 @@ class Functionalities extends Model
     {
         return $this->belongsToMany(Contract::class, 'contract_functionality', 'funkcionalnost_id', 'ugovor_id');
     }
+
+    public function market() : BelongsTo
+    {
+        return $this->belongsTo(Market::class, 'trziste_id');
+    }
 }
