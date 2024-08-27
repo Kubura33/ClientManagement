@@ -3,6 +3,7 @@
     namespace App\Observers;
 
     use App\Models\Contract;
+    use App\Models\Implementation;
     use Carbon\Carbon;
     use DateTime;
     use Illuminate\Support\Facades\DB;
@@ -24,6 +25,20 @@
         public function updated(Contract $contract): void
         {
             $this->setBrojInstalacija($contract);
+                if($contract->status_id == 3){
+                        Implementation::create([
+                            'ugovor_id' => $contract->id,
+                            'zaduzen_za_implementaciju' => auth()->user()->username,
+                            'implementirao' => $contract->status_implementiranja,
+                        ]);
+                }else{
+                    Implementation::create([
+                        'ugovor_id' => $contract->id,
+                        'zaduzen_za_implementaciju' => auth()->user()->username,
+                        'implementirao' => $contract->status->naziv,
+                    ]);
+                }
+
         }
 
         /**

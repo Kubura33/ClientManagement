@@ -323,6 +323,7 @@
             } else if ($filter == 3) {
                 $contracts = ImplementationStatus::where('id', 3)->first()->contract->load('company.market');
             }
+
             foreach ($contracts as $contract) {
                 if($filter != 3){
                     if($contract->status_id == $filter){

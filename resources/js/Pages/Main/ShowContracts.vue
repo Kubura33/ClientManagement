@@ -4,7 +4,7 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {router, useForm} from "@inertiajs/vue3";
-import {onMounted, ref, inject} from 'vue'
+import {onMounted, ref, inject, computed} from 'vue'
 import InputError from "@/Components/InputError.vue";
 
 
@@ -41,7 +41,16 @@ onMounted(() => {
     setTitle(title.value)
 
 })
+const sortedCompanies = computed(() => {
+    if(props.companies){
+        return [...props.companies].sort((a, b) => {
+            const firstLetterA = a.ime.charAt(0).toUpperCase();
+            const firstLetterB = b.ime.charAt(0).toUpperCase();
+            return firstLetterA.localeCompare(firstLetterB);
+        });
+    }
 
+});
 </script>
 
 <template>
@@ -124,7 +133,7 @@ onMounted(() => {
                 </tr>
                 </thead>
                 <tbody>
-                <tr @dblclick="goToContract(company.id)" v-for="company in companies" class="cursor-pointer">
+                <tr @dblclick="goToContract(company.id)" v-for="company in sortedCompanies" class="cursor-pointer">
                     <th scope="row"> {{ company.ime }}</th>
                     <td> {{ company.PIB }}</td>
                     <td>{{ company.MB }}</td>
