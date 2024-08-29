@@ -19,7 +19,7 @@ class FunctionalitiesController extends Controller
         }
         return Inertia::render('Functionalities/NewFunctionality',[
             'market' => $market,
-            'existingFuncs' => Functionalities::all()
+            'existingFuncs' => $market->functionalities
         ]);
     }
 
@@ -28,15 +28,16 @@ class FunctionalitiesController extends Controller
         if (!Gate::allows('can-access', 'paket')) {
             return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
         }
-        if(isEmpty($request->functionalities)){
+        if(!count($request->functionalities)){
             return redirect()->back()->with('error', 'Niste uneli ni jednu funkcionalnost');
         }else{
             foreach ($request->functionalities as $functionality) {
                 Functionalities::create([
-                    'functionality' => $functionality['funkcionalnost'],
+                    'funkcionalnost' => $functionality['funkcionalnost'],
+                    'trziste_id' => $request->market
                 ]);
             }
-            return redirect()->back()->with('error', 'Funkcionalnosti uspesno dodate');
+            return redirect()->back()->with('success', 'Funkcionalnosti uspesno dodate');
         }
     }
     public function functionalityToPackage(Market $market)
@@ -44,8 +45,8 @@ class FunctionalitiesController extends Controller
         if (!Gate::allows('can-access', 'paket')) {
             return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
         }
-        $packages = Package::where('trziste_id', $market->id)->get();
-        $packages->load('functionalities');
+        $packages = Package::where('trziste_id', $market->id)->with('functionalities')->get();
+
         $existing_funcs = $market->functionalities;
         return Inertia::render('Functionalities/FunctionalityToPackage', [
             'packages' => $packages,

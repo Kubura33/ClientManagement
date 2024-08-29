@@ -54,11 +54,13 @@ const isEditContact = ref(false)
 const closeContactModal = () => {
     showContactModal.value = false
     contactModal.value.clear()
+    document.body.style.overflow = 'auto'
 }
 const openContactModal = () => {
     isEditContact.value = false
     showContactModal.value = true
     contactModal.value.clear()
+    document.body.style.overflow = 'hidden'
 }
 const addToContacts = (newContact) => {
 
@@ -152,6 +154,7 @@ const closeFunctionalityModal = () => {
     if (funcModal.value) {
         funcModal.value.reset()
     }
+    document.body.style.overflow = 'auto'
 }
 const isChecked = (func) => {
     return chosenFunctionalities.value.some(cf => cf.funkcionalnost.toLowerCase() === func.funkcionalnost.toLowerCase())
@@ -161,6 +164,7 @@ const openFunctionalityModal = () => {
     if (funcModal.value) {
         funcModal.value.reset()
     }
+    document.body.style.overflow = 'hidden'
 }
 const saveFunc = (checkedFunctionalities, customFunc) => {
     if (Array.isArray(forma.customFunctionalities)) {
@@ -198,12 +202,14 @@ const showInstallationDateModal = ref(false)
 const InstallationDateModalRef = ref(null)
 const openInstallationDateModal = () => {
     showInstallationDateModal.value = true
+    document.body.style.overflow = 'hidden'
 }
 const closeInstallationDateModal = () => {
     showInstallationDateModal.value = false
     if (forma.newDates.length < 1) {
         InstallationDateModalRef.value.clear()
     }
+    document.body.style.overflow = 'auto'
 }
 const addDates = (dates) => {
     forma.newDates = dates
@@ -263,8 +269,8 @@ onMounted(() => {
         :is-edit="isEditContact"
         @finishEdit="finishEdittingContact"
         ref="contactModal"></ContactModal>
-    <div class="pl-6" >
-        <form @submit.prevent="submit" :class="{'disabled-form' : !hasMarket}">
+    <div class="pl-6 w-full" >
+        <form @submit.prevent="submit" :class="{'disabled-form' : !hasMarket}" class="w-full">
             <div class="w-full ">
                 <InputLabel for="name" value="Ime firme - grupacije/klijenta"/>
 

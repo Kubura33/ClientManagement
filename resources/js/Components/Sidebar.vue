@@ -29,7 +29,7 @@ const logout = () => {
         class="sidebar relative top-0 bottom-0 lg:left-0 min-h-screen p-2  overflow-y-auto text-center bg-gray-900"
         style="min-width: 300px; max-width: 300px"
     >
-        <div class="fixed" style="width: 290px;">
+        <div class="fixed scale-90 transform origin-top-left" style="width: 290px;">
             <div class="text-gray-100 text-xl">
                 <div class="p-2.5 mt-1 flex align-items-end">
                     <h1 class="text-center text-gray-200  cursor-pointer" @click="goBack">&larr;</h1>

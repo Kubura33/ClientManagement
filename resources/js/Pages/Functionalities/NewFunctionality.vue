@@ -14,7 +14,8 @@ const props = defineProps({
 
 const newFunc = ref("");
 const form = useForm({
-    functionalities: []
+    functionalities: [],
+    market: props.market.id
 })
 const addNewFunc = () => {
     if (props.existingFuncs.some(eF => eF.funkcionalnost === newFunc.value)) {
@@ -36,7 +37,9 @@ const removeFunc = (func) => {
     }
 }
 const submit = () => {
-    form.post(route('nova-funkcionalnost.store'));
+    form.post(route('nova-funkcionalnost.store'), {
+        onSuccess: () => form.reset()
+    });
 }
 </script>
 
@@ -58,7 +61,7 @@ const submit = () => {
                 </div>
                 <div class="mt-4" v-if="form.functionalities.length > 0">
                     <h5> Dodate funkcionalnosti</h5>
-                    <div class="bg-white shadow rounded  mt-2 w-full">
+                    <div class="">
 
                         <div class="mt-1 max-h-[300px] overflow-y-auto">
                             <ul class="list-none pt-2 px-3">
@@ -74,9 +77,9 @@ const submit = () => {
                         </div>
                     </div>
                 </div>
-                <div class="mt-4">
+                <div class="mt-4" v-if="existingFuncs.length > 0">
                     <h5> Postojece funkcionalnosti</h5>
-                    <div class="bg-white shadow rounded p-3 mt-2 w-full">
+                    <div class="p-3 mt-2 w-full">
 
                         <div class="mt-1 max-h-[300px] overflow-y-auto">
                             <ul class="list-disc">
@@ -85,6 +88,9 @@ const submit = () => {
 
                         </div>
                     </div>
+                </div>
+                <div v-else class="mt-4">
+                    <h5>Ovo trziste trenutno nema funkcionalnosti</h5>
                 </div>
 
 

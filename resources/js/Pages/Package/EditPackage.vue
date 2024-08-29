@@ -3,7 +3,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import {useForm} from '@inertiajs/vue3';
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {v4 as uuidv4} from 'uuid';
 
 const functionalities = ref([]);
@@ -37,7 +37,6 @@ const setData = () => {
                 id: f.id
             }))
             form.funkcionalnosti = [...functionalities.value];
-            form.trzista = [...currentPackage.value.market];
             functionalities.value = [];
         }
     }
@@ -57,6 +56,15 @@ const toggleFunctionality = (func) => {
 
 };
 
+//SORTING FUNCS
+const sortedFuncs = computed(() => {
+    return props.existingFuncs.slice().sort((a, b) => {
+        if (doesPackageContainFunc(a) === doesPackageContainFunc(b)) {
+            return a.funkcionalnost.localeCompare(b.funkcionalnost);
+        }
+        return doesPackageContainFunc(b) - doesPackageContainFunc(a); // Checked items come first
+    });
+});
 
 // PACKAGE MODAL
 
@@ -130,14 +138,14 @@ const submit = () => {
 
                     <InputError class="mt-2" :message="form.errors.broj_big"/>
                 </div>
-                <div id="funkcionalnosti" class="w-full">
+                <div id="funkcionalnosti" class="w-full" v-if="existingFuncs.length > 0">
                     <div class="mt-3">
                         <span>Funkcionalnosti koje vec postoje u sistemu:</span>
                     </div>
                     <div class="bg-white shadow rounded p-3 mt-2">
 
                         <div class="mt-1 overflow-y-auto max-h-[300px]">
-                            <div class="flex items-center justify-between gap-4 " v-for="func in existingFuncs"
+                            <div class="flex items-center justify-between gap-4 " v-for="func in sortedFuncs"
                                  :key="uuidv4()">
                                 <div class="flex flex-row-reverse gap-2">
                                     <label class="form-check-label" :for="func.funkcionalnost">
@@ -155,6 +163,9 @@ const submit = () => {
                         </div>
                     </div>
 
+                </div>
+                <div v-else class="bg-white shadow rounded p-3 mt-4">
+                    Trenutno nema funkcionalnosti na ovom trzistu
                 </div>
             </div>
 

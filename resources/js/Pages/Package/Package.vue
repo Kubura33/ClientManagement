@@ -28,8 +28,12 @@ const form = useForm({
 
 
 const submit = () => {
-    console.log("TEST")
-    form.post(route('paket.store'))
+    form.post(route('paket.store'),
+        {
+            onSuccess: () => {
+                form.reset();
+            }
+        })
 }
 </script>
 

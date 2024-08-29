@@ -71,8 +71,8 @@ defineExpose({
 </script>
 
 <template>
-    <div v-if="show" class="modal fade show d-block" tabindex="-1" role="dialog">
-        <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm">
+    <div v-if="show" class="relative modal fade show d-block" tabindex="-1" role="dialog">
+        <div class="fixed w-screen inset-0 bg-black bg-opacity-50 backdrop-blur-sm">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">

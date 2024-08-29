@@ -36,7 +36,7 @@
                 return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
             }
             $request->validate([
-                'ime_paketa' => ['required', 'string', 'max:255', Rule::unique('packages', 'ime')],
+                'ime_paketa' => ['required', 'string', 'max:255'],
                 'cena' => ['required', 'numeric'],
                 'broj_big' => ['required', 'numeric'],
                 'trziste' => ['required']
@@ -71,10 +71,16 @@
 
         public function edit(Market $market)
         {
+            if($market){
+                $existing_funcs = $market->functionalities;
+            }else {
+                return redirect()->route('dashboard')->with('error', "Trziste nije izabrano");
+            }
+
             return Inertia::render('Package/EditPackage', [
                 'market' => $market,
-                'packages' => Package::with(['functionalities', 'market'])->get(),
-                'existingFuncs' => Functionalities::all(),
+                'packages' => Package::with(['functionalities', 'market'])->where("trziste_id", $market->id)->get(),
+                'existingFuncs' => $existing_funcs,
             ]);
         }
 
@@ -84,12 +90,19 @@
                 return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
             }
             $request->validate([
-                'ime_paketa' => ['required', 'string', 'max:255', Rule::unique('packages', 'ime')->ignore($package->id)],
+                'ime_paketa' => ['required', 'string', 'max:255'],
                 'cena_paketa' => ['required', 'numeric'],
                 'broj_big' => ['numeric'],
                 'funkcionalnosti' => ['required', 'array'],
                 'trziste' => ['required']
             ]);
+            $packageExists = DB::table('packages')
+                ->where("id", "!=", $package->id)
+                ->whereRaw('LOWER(ime) = ? AND trziste_id = ?', [strtolower($request->ime_paketa), $request->trziste['id']])
+                ->first();
+            if($packageExists){
+                return redirect()->back()->with('error', "Paket sa ovim imenom na ovom trzistu vec postoji");
+            }
             $package->update([
                 'ime' => $request->ime_paketa,
                 'cena' => $request->cena_paketa,
@@ -102,9 +115,6 @@
                     $package->functionalities()->attach($funk['id']);
                 }
             }
-            dd($request->trziste['id']);
-            $package->market()->attach($request->trziste['id']);
-
             $package->save();
             return redirect()->back()->with('success', 'Paket je uspesno sacuvan');
         }

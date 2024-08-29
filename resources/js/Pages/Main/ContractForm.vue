@@ -3,7 +3,7 @@ import TextInput from "@/Components/TextInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import {useForm, usePage} from "@inertiajs/vue3";
-import {onMounted, ref, inject} from "vue";
+import {onMounted, ref, inject, computed} from "vue";
 import {v4 as uuidv4} from 'uuid';
 import InputError from "@/Components/InputError.vue";
 import ContactModal from "@/Components/ContactModal.vue";
@@ -53,11 +53,13 @@ const isEditContact = ref(false)
 const closeContactModal = () => {
     showContactModal.value = false
     contactModal.value.clear()
+    document.body.style.overflow = 'auto'
 }
 const openContactModal = () => {
     isEditContact.value = false
     showContactModal.value = true
     contactModal.value.clear()
+    document.body.style.overflow = 'hidden'
 }
 const addToContacts = (newContact) => {
 
@@ -98,7 +100,7 @@ const editContact = (cTe) => {
     contactToEdit.value = cTe
     showContactModal.value = true
     isEditContact.value = true
-
+    document.body.style.overflow = 'hidden'
 
 
 }
@@ -142,12 +144,14 @@ const closeFunctionalityModal = () => {
     if(funcModal.value){
         funcModal.value.reset()
     }
+    document.body.style.overflow = 'auto'
 }
 const openFunctionalityModal = () => {
     showFunctionalityModal.value = true
     if(funcModal.value){
         funcModal.value.reset()
     }
+    document.body.style.overflow = 'hidden'
 }
 const saveFunc = (checkedFunctionalities, customFunc) => {
     if (Array.isArray(forma.customFunctionalities)) {
@@ -162,6 +166,15 @@ const saveFunc = (checkedFunctionalities, customFunc) => {
     }
     closeFunctionalityModal();
 }
+
+//SORTING FUNCS
+const sortedFuncs = computed(() => {
+    return chosenFunctionalities.value.slice().sort((a, b) => a.funkcionalnost.localeCompare(b.funkcionalnost)
+
+    );
+});
+
+
 const setTitle = inject('setTitle')
 onMounted(() => {
     setTitle(" - Novi klijent")
@@ -196,14 +209,18 @@ const submit = () => {
 </script>
 
 <template>
-    <AddFunctionalityModal :show="showFunctionalityModal"
-                           @closeModal="closeFunctionalityModal"
-                           :existingFunctionalities="existingFunctionalities"
-                           :chosen-functionalities="chosenFunctionalities"
-                           :form-custom-funcs="forma.customFunctionalities"
-                           @saveFunctionalities="saveFunc"
-                           ref="funcModal"
-    ></AddFunctionalityModal>
+
+        <AddFunctionalityModal
+            :show="showFunctionalityModal"
+            @closeModal="closeFunctionalityModal"
+            :existingFunctionalities="existingFunctionalities"
+            :chosen-functionalities="chosenFunctionalities"
+            :form-custom-funcs="forma.customFunctionalities"
+            @saveFunctionalities="saveFunc"
+            ref="funcModal"
+        ></AddFunctionalityModal>
+
+
     <InstallationDateModal
         :show="showInstallationDateModal"
         :broj_instalacija="forma.broj_preostalih_instalacija"
@@ -219,8 +236,8 @@ const submit = () => {
         :is-edit="isEditContact"
         @finishEdit="finishEdittingContact"
         ref="contactModal"></ContactModal>
-    <div class="ml-[100px]">
-        <form @submit.prevent="submit">
+    <div class="ml-[100px] w-full">
+        <form @submit.prevent="submit" class="w-full">
             <div class="w-2/4 ">
                 <InputLabel for="name" value="Ime firme - grupacije/klijenta"/>
                 <TextInput
@@ -345,7 +362,7 @@ const submit = () => {
                             Izaberite paket za prikaz funkcionalnosti
                         </div>
                         <div class="flex items-center justify-between gap-4"
-                             v-for="func in chosenFunctionalities"
+                             v-for="func in sortedFuncs"
                              :key="uuidv4()"
                         >
                             <div class="flex flex-row-reverse gap-2">
@@ -364,8 +381,6 @@ const submit = () => {
                                        @change="func.isDone = !func.isDone"
                                        :checked="func.isDone"
                                 >
-                                {{func.isDone}}
-
                             </div>
 
                         </div>

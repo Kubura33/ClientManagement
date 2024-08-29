@@ -58,14 +58,24 @@ const toggleFunctionality = (func) => {
 
 const customFunc = ref("")
 const addCustomFunc = () => {
+    var doesntExist = 1
     const newFunc = {
         funkcionalnost: customFunc.value
     }
     if(form.funkcionalnosti.some (f => f.funkcionalnost.toLowerCase() == newFunc.funkcionalnost.toLowerCase()) || form.customFuncs.some( cf => cf.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase())){
-        alert("Ova funkcionalnost vec postoji");
-    }else{
-        form.customFuncs.push(newFunc)
+        doesntExist = 0
     }
+    if(form.customFuncs.some( cf => cf.funkcionalnost.toLowerCase() == newFunc.funkcionalnost.toLowerCase() )){
+        doesntExist = 0
+    }
+    if(props.existingFuncs.some( cf => cf.funkcionalnost.toLowerCase() == newFunc.funkcionalnost.toLowerCase() )){
+        doesntExist = 0
+    }
+    if(doesntExist)
+        form.customFuncs.push(newFunc)
+    else
+        alert("Ova funkcionalnost vec postoji")
+
 }
 
 const removeCustomFunc = (func) => {
@@ -83,6 +93,7 @@ const submit = () => {
         onSuccess: () => {
             form.reset()
             chosenPackage.value = null
+            customFunc.value = ""
         }
     })
 
@@ -90,6 +101,7 @@ const submit = () => {
 </script>
 <template>
     <h4>Izmena za pakete na trzistu: {{market.ime_trzista}}</h4>
+
     <div class="w-full flex items-center justify-center mb-10">
         <form class="w-full flex flex-col items-center justify-center mt-10" @submit.prevent="submit">
             <div class="lg:w-2/5 md:w-3/5">
@@ -106,7 +118,7 @@ const submit = () => {
 
                 </div>
 
-                <div id="funkcionalnosti" class="w-full">
+                <div id="funkcionalnosti" class="w-full" v-if="existingFuncs.length>0">
                     <div class="mt-3">
                         <span>Funkcionalnosti koje vec postoje u sistemu:</span>
                     </div>
@@ -132,6 +144,9 @@ const submit = () => {
                     </div>
 
                 </div>
+                <div v-else>
+                    <h5>Trenutno nema funkcionalnosti u sistemu</h5>
+                </div>
                 <div class="mt-4">
                     <InputLabel for="customFunc" value="Nova funkcionalnost"/>
 
@@ -141,6 +156,7 @@ const submit = () => {
                         class="mt-1 block w-full text-capitalize"
                         v-model="customFunc"
                         @keydown.enter.prevent="addCustomFunc"
+                        :disabled="form.paket_id == null"
                     />
 
                 </div>
@@ -167,9 +183,8 @@ const submit = () => {
                 </div>
             </div>
 
-
             <div class="mt-4">
-                <button class="btn btn-primary">Snimi paket</button>
+                <button class="btn btn-primary" :disabled="form.paket_id == null">Snimi paket</button>
             </div>
 
         </form>

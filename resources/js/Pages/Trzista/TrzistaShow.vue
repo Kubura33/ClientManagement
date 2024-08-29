@@ -75,7 +75,7 @@ const showFunctionalityDropdown = ref(false)
                           class="text-current no-underline block px-4 py-2 text-sm capitalize text-gray-700 hover:bg-blue-500 hover:text-white">
                         Dodaj funkcionalnost u paket
                     </Link>
-                    <Link :href="route('paket-funkcionalnost.store', {market: market.id})"
+                    <Link :href="route('nova-funkctionalnost', {market: market.id})"
                           class="text-current no-underline block px-4 py-2 text-sm capitalize text-gray-700 hover:bg-blue-500 hover:text-white">
                         Dodaj novu funkcionalnost - bez paketa
                     </Link>
