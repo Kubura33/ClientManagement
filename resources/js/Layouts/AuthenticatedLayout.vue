@@ -27,7 +27,7 @@ provide('setOtherCompanies', setOtherCompanies)
         <div class="min-h-screen bg-blue-100 " >
             <!-- Page Heading -->
             <header class="bg-white shadow fixed w-full h-[100px] z-1 text-[80%] " >
-                <div class="mx-auto py-6 px-4 sm:px-6 lg:px-8 scale-90 transform origin-top-left">
+                <div class="mx-auto py-6 px-4 sm:px-6 lg:px-8 transform origin-top-left">
                     <h2 class="font-semibold text-xl text-gray-800 leading-tight p-2">
                         B2B Support - Evidencija klijenata - {{ $page.props.auth.user.username }} {{ header }}
 
@@ -44,7 +44,7 @@ provide('setOtherCompanies', setOtherCompanies)
                          :trzista="$page.props.trzista"
                          :otherCompanies="otherCompanies"
                 />
-                <main class="flex-grow-1 p-4 mt-[100px] scale-90 transform origin-top-left">
+                <main class="flex-grow-1 pt-0 p-4 mt-[100px] transform origin-top-left">
                     <div class="alert alert-success" role="alert" v-if="$page.props.flash.success"
                          @click="$page.props.flash.success=null">
                         {{ $page.props.flash.success }}
