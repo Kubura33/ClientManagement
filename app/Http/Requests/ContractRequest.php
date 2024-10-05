@@ -24,10 +24,11 @@
         public function rules(): array
         {
             return [
+                'worker' => ['required'],
                 'klijent' => ['string', 'max:255', 'nullable'],
                 'ime_firme' => ['required', 'string', 'max:255'],
-                'PIB' => ['string', 'max:9', 'required', Rule::unique('companies')->ignore($this->contract?->company->id)],
-                'MB' => ['string', 'max:8', 'required', Rule::unique('companies')->ignore($this->contract?->company->id)],
+                'PIB' => ['required', 'max:9', 'string', Rule::unique('companies')->ignore($this->contract?->company->id)],
+                'MB' => ['required', 'max:8', 'string', Rule::unique('companies')->ignore($this->contract?->company->id)],
                 'package' => ['required'],
                 'functionalities' => ['required', 'array'],
                 'connection' => ['required', 'max:1000'],
@@ -47,6 +48,7 @@
         public function messages()
         {
             return [
+                'worker.required' => "Operater je obavezan!",
                 'klijent.string' => 'Ime klijenta mora biti u string formatu',
                 'klijent.max' => 'Maksimalna duzina karaktera je 255',
                 'ime_firme.required' => 'Ime firme je obavezno!',

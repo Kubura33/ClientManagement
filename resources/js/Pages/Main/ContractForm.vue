@@ -11,6 +11,7 @@ import AddFunctionalityModal from "@/Components/AddFunctionalityModal.vue";
 import InstallationDateModal from "@/Components/InstallationDateModal.vue";
 import CustomeLabel from "@/Components/CustomeLabel.vue";
 import CustomInput from "@/Components/CustomInput.vue";
+import VueMultiselect from "vue-multiselect/src/Multiselect.vue";
 
 const props = defineProps({
     packages: Array,
@@ -18,11 +19,13 @@ const props = defineProps({
     fakturisanje: Array,
     existingFunctionalities: Array,
     market: Object,
+    workers: Array,
 })
 const page = usePage()
 const chosenFunctionalities = ref([])
 const forma = useForm({
     trziste_id: props.market.id,
+    worker: "",
     klijent: "",
     ime_firme: "",
     PIB: "",
@@ -44,12 +47,36 @@ const forma = useForm({
     newDates: [],
 })
 
-const contacts = ref( [
-    { name: "John Doe", phone1: "123-456", email1: "john@example.com", phone2: "789-012", email2: "johndoe@example.com" },
-    { name: "Jane Smith", phone1: "555-666", email1: "jane@example.com", phone2: "555-777", email2: "janesmith@example.com" },
-    { name: "Alice Brown", phone1: "999-888", email1: "alice@example.com", phone2: "999-777", email2: "alicebrown@example.com" },
-    { name: "Alice Brown", phone1: "999-888", email1: "alice@example.com", phone2: "999-777", email2: "alicebrown@example.com" },
-    { name: "Alice Brown", phone1: "999-888", email1: "alice@example.com", phone2: "999-777", email2: "alicebrown@example.com" }
+const contacts = ref([
+    {name: "John Doe", phone1: "123-456", email1: "john@example.com", phone2: "789-012", email2: "johndoe@example.com"},
+    {
+        name: "Jane Smith",
+        phone1: "555-666",
+        email1: "jane@example.com",
+        phone2: "555-777",
+        email2: "janesmith@example.com"
+    },
+    {
+        name: "Alice Brown",
+        phone1: "999-888",
+        email1: "alice@example.com",
+        phone2: "999-777",
+        email2: "alicebrown@example.com"
+    },
+    {
+        name: "Alice Brown",
+        phone1: "999-888",
+        email1: "alice@example.com",
+        phone2: "999-777",
+        email2: "alicebrown@example.com"
+    },
+    {
+        name: "Alice Brown",
+        phone1: "999-888",
+        email1: "alice@example.com",
+        phone2: "999-777",
+        email2: "alicebrown@example.com"
+    }
 ])
 //CONTACT MODAL
 const showContactModal = ref(false);
@@ -209,6 +236,7 @@ const submit = () => {
     forma.post(route('novi-klijent'))
 }
 
+console.log(props.workers)
 </script>
 
 <template>
@@ -250,10 +278,15 @@ const submit = () => {
                 <!-- Label & Select -->
                 <div class="md:w-2/5">
                     <CustomeLabel>Zaduzen za implementaciju</CustomeLabel>
-                    <select id="selectOption"
-                            class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option>Super Admin</option>
-                    </select>
+                    <VueMultiselect :options="workers"
+                                    track-by="id"
+                                    label="username"
+                                    v-model="forma.worker"
+                                    placeholder="Izaberite jednog operatera"
+
+                    />
+                    <InputError :message="forma.errors.worker" v-if="forma.errors.worker"/>
+
                 </div>
 
                 <!-- Label & Input -->
@@ -262,6 +295,8 @@ const submit = () => {
                     <CustomInput
                         v-model="forma.klijent"
                         id="grupacija"/>
+                    <InputError :message="forma.errors.klijent" v-if="forma.errors.klijent"/>
+
                 </div>
 
                 <!-- Three Labels & Inputs -->
@@ -271,18 +306,24 @@ const submit = () => {
                         <CustomInput
                             v-model="forma.ime_firme"
                             id="naziv_firme"/>
+                        <InputError :message="forma.errors.ime_firme" v-if="forma.errors.ime_firme"/>
+
                     </div>
                     <div>
                         <CustomeLabel for="PIB">PIB</CustomeLabel>
                         <CustomInput
                             v-model="forma.PIB"
                             id="PIB"/>
+                        <InputError :message="forma.errors.PIB" v-if="forma.errors.PIB"/>
+
                     </div>
                     <div>
                         <CustomeLabel for="mb">Maticni broj</CustomeLabel>
                         <CustomInput
                             v-model="forma.MB"
                             id="mb"/>
+                        <InputError :message="forma.errors.MB" v-if="forma.errors.MB"/>
+
                     </div>
                 </div>
 
@@ -300,6 +341,8 @@ const submit = () => {
                             >{{ pkg.ime }}
                             </option>
                         </select>
+                        <InputError :message="forma.errors.package" v-if="forma.errors.package"/>
+
                     </div>
                     <div class="relative bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
                         <button
@@ -338,6 +381,8 @@ const submit = () => {
 
                             </div>
                         </div>
+                        <InputError :message="forma.errors.functionalities" v-if="forma.errors.functionalities"/>
+
                     </div>
                 </div>
 
@@ -352,22 +397,30 @@ const submit = () => {
                         <CustomeLabel for="grupacija">Kontakti</CustomeLabel>
 
                         <div class="max-h-28 overflow-y-auto">
-                            <template v-for="(contact, index) in contacts" :key="index">
-                                <div class="flex justify-between items-center py-2 border-b border-gray-300">
-                                    <div class="text-sm font-medium text-gray-700">{{ contact.name }}</div>
-                                    <div class="text-sm text-gray-600">{{ contact.phone1 }}</div>
-                                    <div class="text-sm text-gray-600">{{ contact.email1 }}</div>
+                            <template v-for="(contact, index) in forma.contacts" :key="index">
+                                <div
+                                    @dblclick="editContact(contact)"
+                                    class="flex justify-between items-center py-2 border-b border-gray-300 cursor-pointer hover:bg-gray-100">
+                                    <div class="text-sm font-medium text-gray-700">{{ contact.ime_prezime }}</div>
+                                    <div class="text-sm text-gray-600">{{ contact.phone }}</div>
+                                    <div class="text-sm text-gray-600">{{ contact.email }}</div>
                                     <div class="text-sm text-gray-600">{{ contact.phone2 }}</div>
                                     <div class="text-sm text-gray-600">{{ contact.email2 }}</div>
                                 </div>
                             </template>
-                            <div v-if="contacts.length === 0" class="text-gray-600">No contacts available</div>
+                            <InputError :message="forma.errors.contacts" v-if="forma.errors.contacts"/>
+                            <div v-if="forma.contacts.length === 0" class="text-gray-600">Trenutno nema kontakata</div>
                         </div>
                     </div>
                     <div class="bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
-                        <label for="connectionMethod" class="block text-sm font-medium text-gray-700 mb-2">Nacin konekcije</label>
-                        <textarea id="connectionMethod" rows="4" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter connection method..."></textarea>
+                        <label for="connectionMethod" class="block text-sm font-medium text-gray-700 mb-2">Nacin
+                            konekcije</label>
+                        <textarea id="connectionMethod" rows="4"
+                                  class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                  placeholder="Enter connection method..."></textarea>
+                        <InputError :message="forma.errors.connection" v-if="forma.errors.connection"/>
                     </div>
+
                 </div>
 
                 <!-- Three Labels & Inputs -->
@@ -377,42 +430,53 @@ const submit = () => {
                         <CustomeLabel for="implementation_status">Status implementacije</CustomeLabel>
                         <select id="selectOption" v-model="forma.implementation_status"
                                 class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="1">Option 1</option>
-                            <option value="2">Option 2</option>
-                            <option value="3">Option 3</option>
+                            <option :value="status.id" v-for="status in statuses" :key="status.id">{{
+                                    status.naziv
+                                }}
+                            </option>
                         </select>
-                    </div>
+                        <InputError :message="forma.errors.implementation_status"
+                                    v-if="forma.errors.implementation_status"/>
 
-                    <!-- Radio Buttons and Date Picker - Only Show when Status is 3 -->
-                    <div v-if="forma.implementation_status === 3"
-                         class="col-span-3 md:col-span-1 flex flex-col space-y-2">
-                        <div class="flex gap-2 items-center">
-                            <input v-model="forma.tip_implementacije" type="radio" value="Potpuno" id="potpuno">
-                            <label for="potpuno" class="text-gray-700">Potpuno</label>
-                        </div>
-                        <div class="flex gap-2 items-center">
-                            <input v-model="forma.tip_implementacije" type="radio" value="Čeka se neka funkcionalnost"
-                                   id="fja">
-                            <label for="fja" class="text-gray-700">Čeka se neka funkcionalnost</label>
-                        </div>
-                        <!-- Date Picker -->
-                        <div>
-                            <label for="datum" class="block text-sm font-medium text-gray-700 mb-2">Datum
-                                implementacije</label>
-                            <input type="date" id="datum" v-model="forma.datum"
-                                   class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        </div>
-                        <!-- Error Handling -->
-                        <InputError :message="forma.errors.tip_implementacije" v-if="forma.errors.tip_implementacije"/>
                     </div>
+                    <!-- Show ONLY if implementation status is 3 -->
+                    <transition name="fade">
+                        <div v-if="forma.implementation_status === 3"
+                             class="col-span-3 md:col-span-1 flex flex-col space-y-2">
+                            <div class="flex gap-2 items-center">
+                                <input v-model="forma.tip_implementacije" type="radio" value="Potpuno" id="potpuno">
+                                <label for="potpuno" class="text-gray-700">Potpuno</label>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <input v-model="forma.tip_implementacije" type="radio"
+                                       value="Čeka se neka funkcionalnost"
+                                       id="fja">
+                                <label for="fja" class="text-gray-700">Čeka se neka funkcionalnost</label>
+                            </div>
+                            <!-- Date Picker -->
+                            <div>
+                                <label for="datum" class="block text-sm font-medium text-gray-700 mb-2">Datum
+                                    implementacije</label>
+                                <input type="date" id="datum" v-model="forma.datum"
+                                       class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <!-- Error Handling -->
+                            <InputError :message="forma.errors.tip_implementacije"
+                                        v-if="forma.errors.tip_implementacije"/>
+                        </div>
+                    </transition>
+
 
                     <!-- Billing Method Select -->
                     <div>
                         <CustomeLabel for="nacin_fakturisanja">Nacin fakturisanja</CustomeLabel>
                         <select id="nacin_fakturisanja"
+                                v-model="forma.tip_fakturisanja"
                                 class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option>Select an option</option>
+                            <option v-for="tip in fakturisanje" :value="tip.id">{{ tip.naziv_fakturisanja }}</option>
                         </select>
+                        <InputError :message="forma.errors.tip_fakturisanja" v-if="forma.errors.tip_fakturisanja"/>
+
                     </div>
                 </div>
 
@@ -420,11 +484,19 @@ const submit = () => {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <CustomeLabel for="godina_ugovora">Godina ugovora</CustomeLabel>
-                        <CustomInput id="godina_ugovora"/>
+                        <CustomInput
+                            v-model="forma.godina_ugovora"
+                            id="godina_ugovora"/>
+                        <InputError :message="forma.errors.godina_ugovora" v-if="forma.errors.godina_ugovora"/>
+
                     </div>
                     <div>
                         <CustomeLabel for="aneks">Aneks</CustomeLabel>
-                        <CustomInput id="aneks"/>
+                        <CustomInput
+                            v-model="forma.aneks"
+                            id="aneks"/>
+                        <InputError :message="forma.errors.aneks" v-if="forma.errors.aneks"/>
+
                     </div>
                     <div>
                         <CustomeLabel for="grupacija">Grupacija firme</CustomeLabel>
@@ -434,11 +506,20 @@ const submit = () => {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                     <div>
                         <CustomeLabel for="godina_ugovora">Iznos fakture</CustomeLabel>
-                        <CustomInput id="iznos_fakture"/>
+                        <CustomInput
+                            v-model="forma.iznos_fakture"
+                            id="iznos_fakture"/>
+                        <InputError :message="forma.errors.iznos_fakture" v-if="forma.errors.iznos_fakture"/>
+
                     </div>
                     <div>
                         <CustomeLabel for="bpig">Broj besplatnih instalacija godisnje</CustomeLabel>
-                        <CustomInput id="bpig"/>
+                        <CustomInput
+                            v-model="forma.broj_preostalih_instalacija"
+                            id="bpig"/>
+                        <InputError :message="forma.errors.broj_preostalih_instalacija"
+                                    v-if="forma.errors.broj_preostalih_instalacija"/>
+
                     </div>
                     <div>
                         <div class=" ">
@@ -758,5 +839,11 @@ const submit = () => {
 </template>
 
 <style scoped>
-
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.7s ease;
+}
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+}
 </style>
+

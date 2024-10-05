@@ -13,6 +13,7 @@
     use App\Models\Invoicing;
     use App\Models\Market;
     use App\Models\Package;
+    use App\Models\User;
     use Illuminate\Support\Facades\Gate;
     use Illuminate\Http\Request;
     use Illuminate\Support\Facades\Date;
@@ -40,7 +41,7 @@
             $statuses = ImplementationStatus::all();
             $existingFunctionalities = Functionalities::where('trziste_id', $trziste)->get();
             $fakturisanje = Invoicing::all();
-
+            $workers = User::all();
             if ($trziste) {
                 $packages = Package::where('trziste_id', $trziste)->with('functionalities')->get();
             } else {
@@ -51,7 +52,8 @@
                 'statuses' => $statuses,
                 'fakturisanje' => $fakturisanje,
                 'existingFunctionalities' => $existingFunctionalities,
-                'market' => $id
+                'market' => $id,
+                'workers' => $workers
             ]);
         }
 
@@ -94,6 +96,7 @@
                         ]);
                     }
                     $ugovor = Contract::create([
+                        'worker' => $request->worker,
                         'firma_id' => $company->id,
                         'fakturisanje_id' => $request->tip_fakturisanja,
                         'broj_aneksa' => $request->aneks,

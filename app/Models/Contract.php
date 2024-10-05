@@ -47,4 +47,9 @@ class Contract extends Model
             ->withPivot('uradjeno');
     }
 
+    public function user() : BelongsTo
+    {
+        return $this->belongsTo(User::class, 'zaduzen_za_implementaciju');
+    }
+
 }
