@@ -9,11 +9,12 @@ export default {
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
     ],
-
     theme: {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                roboto: ['Roboto', "sans-serif"],
+                lato: ['Lato', 'sans-serif']
             },
             colors: {
                 'black-semi': '#000000da'

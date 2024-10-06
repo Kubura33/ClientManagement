@@ -22,9 +22,9 @@ class Market extends Model
         return $this->hasMany(Functionalities::class, 'trziste_id');
     }
 
-    public function packages() : BelongsToMany
+    public function packages() : HasMany
     {
-        return $this->belongsToMany(Package::class, 'market_package', 'trziste_id', 'paket_id');
+        return $this->hasMany(Package::class, 'trziste_id');
     }
 
     public function users() : BelongsToMany

@@ -2,11 +2,15 @@ import './bootstrap';
 import '../css/app.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
-
+import '@fontsource/roboto'; // Defaults to weight 400
+import '@fontsource/roboto/500.css'; // Weight 500
+import '@fontsource/roboto/700.css'; // Weight 700
+import '@fontsource/lato'; // Defaults to weight 400
 import 'bootstrap'
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import ToastPlugin from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-bootstrap.css';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 
@@ -23,6 +27,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(ToastPlugin)
             .use(ZiggyVue)
             .mount(el);
     },

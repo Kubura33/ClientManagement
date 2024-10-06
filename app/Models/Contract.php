@@ -44,7 +44,7 @@ class Contract extends Model
     public function functionalities(): BelongsToMany
     {
         return $this->belongsToMany(Functionalities::class, 'contract_functionality', 'ugovor_id', 'funkcionalnost_id')
-            ->withPivot('uradjeno');
+            ->withPivot('uradjeno', 'izabrano');
     }
 
     public function user() : BelongsTo

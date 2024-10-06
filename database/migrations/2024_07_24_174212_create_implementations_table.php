@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('implementations', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(\App\Models\Contract::class, 'ugovor_id');
-            $table->foreignId('zaduzen_za_implementaciju');
-            $table->foreignId('implementirao');
+            $table->foreignIdFor(\App\Models\User::class, 'user_id');
+            $table->text('log');
+            $table->string('action');
             $table->timestamps();
         });
     }

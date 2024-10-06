@@ -9,6 +9,9 @@ import InputError from "@/Components/InputError.vue";
 import ContactModal from "@/Components/ContactModal.vue";
 import AddFunctionalityModal from "@/Components/AddFunctionalityModal.vue";
 import InstallationDateModal from "@/Components/InstallationDateModal.vue";
+import VueMultiselect from "vue-multiselect/src/Multiselect.vue";
+import CustomeLabel from "@/Components/CustomeLabel.vue";
+import CustomInput from "@/Components/CustomInput.vue";
 
 const props = defineProps({
     packages: Array,
@@ -19,10 +22,12 @@ const props = defineProps({
     otherContracts: Array,
     market: Object,
     datumiBesplatnihInstalacija: Array,
+    workers: Array,
 })
 const page = usePage()
 const chosenFunctionalities = ref(props.contract ? [...props.contract.functionalities] : [])
 const forma = useForm({
+    worker: props.contract?.zaduzen_za_implementaciju ? props.contract.zaduzen_za_implementaciju : "",
     klijent: props.contract?.company?.client ? props.contract.company.client.ime : "",
     ime_firme: props.contract?.company ? props.contract.company.ime : "",
     PIB: props.contract?.company ? props.contract.company.PIB : "",
@@ -69,7 +74,7 @@ const addToContacts = (newContact) => {
 
         if (isEmailDuplicate) {
             alert("Korisnik sa ovim email-om vec postoji");
-        }else {
+        } else {
             forma.contacts.push(JSON.parse(JSON.stringify(newContact)));
             closeContactModal();
         }
@@ -98,7 +103,7 @@ const doesContactExist = (newContact) => {
 const contactToEdit = ref(null)
 //cTe is contactToEdit passed from v-for
 const editContact = (cTe) => {
-    if(canEdit("kontakti")){
+    if (canEdit("kontakti")) {
         return
     }
     contactToEdit.value = cTe
@@ -106,10 +111,9 @@ const editContact = (cTe) => {
     isEditContact.value = true
 
 
-
 }
 const finishEdittingContact = (changedContact) => {
-    const editedContact = { ...changedContact };
+    const editedContact = {...changedContact};
     const index = forma.contacts.findIndex(c => c.id === editedContact.id);
     if (index !== -1) {
         forma.contacts[index] = editedContact; // Direct assignment should be reactive in Vue 3
@@ -121,34 +125,36 @@ const finishEdittingContact = (changedContact) => {
 const showFunctionalityModal = ref(false);
 const funcModal = ref(null)
 const setFuncs = () => {
-    const selectedPackage = props.packages.find(pkg => pkg.id === forma.package);
-    chosenFunctionalities.value = [...props.contract.functionalities];
+    const selectedPackage = props.packages.find(pkg => pkg.id === forma.package)
+
     if (selectedPackage) {
-        selectedPackage.functionalities.forEach(f => {
-            if (!props.contract.functionalities.some(cF => cF.funkcionalnost === f.funkcionalnost)) {
+        chosenFunctionalities.value = props.contract ? [...props.contract.functionalities] : []
+        selectedPackage.functionalities.forEach(functionality => {
+            const exists = chosenFunctionalities.value.some(chosen => chosen.funkcionalnost === functionality.funkcionalnost);
+            if(!exists){
                 chosenFunctionalities.value.push({
-                    funkcionalnost: f.funkcionalnost,
+                    funkcionalnost: functionality.funkcionalnost,
                     pivot: {
+                        izabrano: true,
                         uradjeno: false
-                    }
-                });
+                    },
+                    id: functionality.id,
+                    trziste_id: functionality.trziste_id
+                })
             }
+
         });
+        forma.broj_preostalih_instalacija = selectedPackage.broj_besplatnih_instalacija_godisnje
+        forma.iznos_fakture = selectedPackage.cena
+
     }
-};
-const toggleFunctionality = (func) => {
-    const funcIndex = chosenFunctionalities.value.findIndex(f => f.funkcionalnost === func.funkcionalnost);
-    const customFuncIndex = forma.customFunctionalities.findIndex(f => f.funkcionalnost === func.funkcionalnost);
-    if (funcIndex !== -1) {
-        chosenFunctionalities.value.splice(funcIndex, 1);
-    } else {
-        chosenFunctionalities.value.push(func);
-    }
-    if (funcIndex !== -1) {
-        forma.customFunctionalities.splice(customFuncIndex, 1)
-    }
-    forma.functionalities = [...chosenFunctionalities.value]
-};
+}
+const notChosenFuncs = computed(() => {
+    return props.existingFunctionalities.filter(existingFunc =>
+        !chosenFunctionalities.value.some(chosenFunc => chosenFunc.funkcionalnost === existingFunc.funkcionalnost)
+    );
+});
+
 const closeFunctionalityModal = () => {
     showFunctionalityModal.value = false
     if (funcModal.value) {
@@ -156,29 +162,86 @@ const closeFunctionalityModal = () => {
     }
     document.body.style.overflow = 'auto'
 }
-const isChecked = (func) => {
-    return chosenFunctionalities.value.some(cf => cf.funkcionalnost.toLowerCase() === func.funkcionalnost.toLowerCase())
-}
 const openFunctionalityModal = () => {
-    showFunctionalityModal.value = true
-    if (funcModal.value) {
-        funcModal.value.reset()
-    }
-    document.body.style.overflow = 'hidden'
-}
-const saveFunc = (checkedFunctionalities, customFunc) => {
-    if (Array.isArray(forma.customFunctionalities)) {
-        if (customFunc.length > 0)
-            forma.customFunctionalities = customFunc;
+    if (!forma.package) {
+        alert("Izaberite paket prvo!");
     } else {
-        console.log('Expected forma.customFunctionalities to be an array');
+        showFunctionalityModal.value = true
+        if (funcModal.value) {
+            funcModal.value.reset()
+        }
+        document.body.style.overflow = 'hidden'
     }
-    forma.functionalities = checkedFunctionalities;
-    if (chosenFunctionalities.value) {
-        chosenFunctionalities.value = chosenFunctionalities.value.concat(checkedFunctionalities);
-    }
-    closeFunctionalityModal();
+
 }
+const addFunctionality = (func) => {
+    const index = chosenFunctionalities.value.findIndex(f => f.funkcionalnost === func.funkcionalnost);
+    if (index === -1) {
+        // Move functionality from existing to added
+        chosenFunctionalities.value.push({
+            funkcionalnost: func.funkcionalnost,
+            selected: true,
+            isDone: false,
+            id: func.id,
+            trziste_id: func.trziste_id,
+        });
+    }
+}
+const removeFunc = (func) => {
+    const index = chosenFunctionalities.value.findIndex(f => f.funkcionalnost === func.funkcionalnost);
+    if (index !== -1) {
+        chosenFunctionalities.value.splice(index, 1); // Remove from added functionalities
+    }
+}
+//CUSTOM FUNCTIONALITIES
+const addCustomFunc = (customFunc) => {
+    if (customFunc) {
+        const newFunc = {
+            funkcionalnost: customFunc.trim(),
+            pivot: {
+                uradjeno: false
+            },
+            selected: true,
+            type: "custom"
+        };
+        const exists = forma.customFunctionalities.some(f =>
+            f.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase()
+        ) || props.existingFunctionalities.some(f =>
+            f.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase()
+        ) || chosenFunctionalities.value.some(f =>
+            f.funkcionalnost.toLowerCase() === newFunc.funkcionalnost.toLowerCase()
+        );
+        if (!exists) {
+            forma.customFunctionalities.push(newFunc);
+        }
+    }
+}
+
+const removeCustomFunc = (customFunc) => {
+    const index = forma.customFunctionalities.findIndex(f => f.funkcionalnost === customFunc.funkcionalnost);
+    if (index !== -1) {
+        forma.customFunctionalities.splice(index, 1); // Remove from added functionalities
+    }
+}
+
+//SORTING FUNCS
+const sortedFuncs = computed(() => {
+    // Combine chosen functionalities and custom functionalities
+    const allFunctionalities = [
+        ...chosenFunctionalities.value,
+        ...forma.customFunctionalities
+    ];
+
+    return allFunctionalities.slice().sort((a, b) => {
+        // First, sort by the "selected" status (true before false)
+        if (a.pivot.izabrano !== b.pivot.izabrano) {
+            return a.pivot.izabrano ? -1 : 1; // selected comes first
+        }
+        // If "selected" is the same, sort alphabetically by "funkcionalnost"
+        return a.funkcionalnost.localeCompare(b.funkcionalnost);
+    });
+});
+
 const canEdit = (field) => {
     const perms = {
         1: ['klijent', 'ime_firme', 'PIB', 'MB', 'paket', 'kontakti', 'funkcionalnosti', 'custom_funkcionalnosti', 'konekcija', 'status_implementacije', 'datum_implementacije', 'godina_ugovora', 'ugovor', 'aneks', 'tip_fakturisanja', 'iznos_fakture'],
@@ -235,32 +298,48 @@ const hasMarket = computed(() => {
     if (page.props.auth.user.role_id === 1) {
         return true; // Admin role always has access
     }
-    return page.props.user.markets.some( m => m.id == props.market.id);
+    return page.props.user.markets.some(m => m.id == props.market.id);
 });
+const customFun = computed(() => forma.customFunctionalities)
 
 onMounted(() => {
     setOtherCompanies(props.otherContracts)
 })
+
+//Setting a worker
+const selectedWorker = computed({
+    get() {
+        return props.workers.find(worker => worker.id === forma.worker) || null;
+    },
+    set(value) {
+        forma.worker = value ? value.id : null;
+    }
+});
 </script>
 
 <template>
+    <Transition name="fade">
+        <AddFunctionalityModal
+            @addFunc="addFunctionality"
+            @remove-func="removeFunc"
+            @add-custom-func="addCustomFunc"
+            @remove-custom-func="removeCustomFunc"
+            :show="showFunctionalityModal"
+            @closeModal="closeFunctionalityModal"
+            :form-custom-funcs="customFun"
+            :not-chosen-functionalities="notChosenFuncs"
+            ref="funcModal"
+        ></AddFunctionalityModal>
+    </Transition>
+
+
     <InstallationDateModal
         :show="showInstallationDateModal"
-        :current-dates="forma.datumi_besplatnih_instalacija"
         :broj_instalacija="forma.broj_preostalih_instalacija"
         @closeModal="closeInstallationDateModal"
         @saveDates="addDates"
-        :can-edit="canEdit('datum_instalacije')"
         ref="InstallationDateModalRef"
     ></InstallationDateModal>
-    <AddFunctionalityModal :show="showFunctionalityModal"
-                           @closeModal="closeFunctionalityModal"
-                           :existingFunctionalities="existingFunctionalities"
-                           :chosen-functionalities="chosenFunctionalities"
-                           :form-custom-funcs="forma.customFunctionalities"
-                           @saveFunctionalities="saveFunc"
-                           ref="funcModal"
-    ></AddFunctionalityModal>
     <ContactModal
         @addToContacts="addToContacts"
         :show="showContactModal"
@@ -269,366 +348,334 @@ onMounted(() => {
         :is-edit="isEditContact"
         @finishEdit="finishEdittingContact"
         ref="contactModal"></ContactModal>
-    <div class="pl-6 w-full" >
-        <form @submit.prevent="submit" :class="{'disabled-form' : !hasMarket}" class="w-full">
-            <div class="w-full ">
-                <InputLabel for="name" value="Ime firme - grupacije/klijenta"/>
+    <div class="min-h-screen pt-0 -mt-20 p-6  flex">
+        <div class="container max-w-screen-lg mx-auto bg-white p-8 rounded-lg shadow-lg transform scale-75">
+            <!-- Form Title -->
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">Evidencija Klijenta</h2>
 
-                <TextInput
-                    id="name"
-                    type="text"
-                    class="mt-1 block w-2/4"
-                    v-model="forma.klijent"
-                    :disabled="canEdit('klijent')"
-                    :class="{'cursor-not-allowed' : canEdit('klijent')}"
-
-                />
-                <InputError :message="forma.errors.klijent" v-if="forma.errors.klijent"/>
-
-            </div>
-            <div id="firma" class="grid grid-cols-1 gap-4 lg:grid-cols-5 xl:grid-cols-8">
-                <div class="mt-4  lg:col-span-3">
-                    <InputLabel for="ime_firme" value="Ime firme"/>
-
-                    <TextInput
-                        id="ime_firme"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.ime_firme"
-                        :disabled="canEdit('ime_firme')"
-                        :class="{'cursor-not-allowed' : canEdit('ime_firme')}"
-                        required
+            <!-- Form Grid -->
+            <form @submit.prevent="submit" class="space-y-6">
+                <!-- Label & Select -->
+                <div class="md:w-2/5">
+                    <CustomeLabel>Zaduzen za implementaciju</CustomeLabel>
+                    <VueMultiselect :options="workers"
+                                    track-by="id"
+                                    label="username"
+                                    v-model="selectedWorker"
+                                    placeholder="Izaberite jednog operatera"
 
                     />
-                    <InputError :message="forma.errors.ime_firme" v-if="forma.errors.ime_firme"/>
-
-                </div>
-                <div class="mt-4 ">
-                    <InputLabel for="PIB" value="PIB"/>
-
-                    <TextInput
-                        id="PIB"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.PIB"
-                        maxlength="9"
-                        required
-                        :disabled="canEdit('PIB')"
-                        :class="{'cursor-not-allowed' : canEdit('PIB')}"
-
-                    />
-                    <InputError :message="forma.errors.PIB" v-if="forma.errors.PIB"/>
-
-                </div>
-                <div class="mt-4 ">
-                    <InputLabel for="MB" value="MB"/>
-
-                    <TextInput
-                        id="MB"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.MB"
-                        maxlength="8"
-                        :disabled="canEdit('MB')"
-                        :class="{'cursor-not-allowed' : canEdit('MB')}"
-
-                    />
-                    <InputError :message="forma.errors.MB" v-if="forma.errors.MB"/>
-
-                </div>
-                <div class="mt-4">
-                    <InputLabel for="paket" value="Paket"/>
-                    <select
-                        id="paket"
-                        class="form-select h-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1"
-                        aria-label="Default select example"
-                        :disabled="canEdit('paket')"
-                        :class="{'cursor-not-allowed' : canEdit('paket')}"
-                        v-model="forma.package"
-                        @change="setFuncs"
-                    >
-                        <option
-                            v-for="pkg in packages" :key="pkg.id"
-                            :value="pkg.id"
-                        >
-                            {{ pkg.ime }}
-                        </option>
-                    </select>
-                    <InputError :message="forma.errors.package" v-if="forma.errors.package"/>
+                    <InputError :message="forma.errors.worker" v-if="forma.errors.worker"/>
 
                 </div>
 
-            </div>
+                <!-- Label & Input -->
+                <div class="md:w-3/5">
+                    <CustomeLabel for="grupacija">Grupacija firme</CustomeLabel>
+                    <CustomInput
+                        :disabled="canEdit('klijent')"
+                        :class="{'cursor-not-allowed' : canEdit('klijent')}"
+                        v-model="forma.klijent"
+                        id="grupacija"/>
+                    <InputError :message="forma.errors.klijent" v-if="forma.errors.klijent"/>
 
-            <div id="text-boxes" class="flex flex-row gap-10 mt-6">
-                <div class="contacts">
-                    <div class="flex justify-between ">
-                        <label class="block text-gray-700 text-sm font-bold ">Kontakti</label>
-                        <span class="text-3xl font-bold text-green-600 cursor-pointer"
-                              v-show="!canEdit('kontakti')"
-                              @click="openContactModal">&#43;</span>
+                </div>
+
+                <!-- Three Labels & Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <CustomeLabel for="naziv_firme">Naziv firme</CustomeLabel>
+                        <CustomInput
+                            :disabled="canEdit('ime_firme')"
+                            :class="{'cursor-not-allowed' : canEdit('ime_firme')}"
+                            v-model="forma.ime_firme"
+                            id="naziv_firme"/>
+                        <InputError :message="forma.errors.ime_firme" v-if="forma.errors.ime_firme"/>
+
                     </div>
+                    <div>
+                        <CustomeLabel for="PIB">PIB</CustomeLabel>
+                        <CustomInput
+                            :disabled="canEdit('PIB')"
+                            :class="{'cursor-not-allowed' : canEdit('PIB')}"
+                            maxlength="9"
+                            v-model="forma.PIB"
+                            id="PIB"/>
+                        <InputError :message="forma.errors.PIB" v-if="forma.errors.PIB"/>
 
-                    <div class="bg-white shadow rounded max-w-[330px] min-h-[320px] max-h-[320px] overflow-y-auto ">
-                        <div class="contact-item mb-1 flex flex-col hover:bg-gray-100 cursor-pointer p-4"
-                             @dblclick="editContact(contact)"
-                             v-for="contact in forma.contacts"
-                             v-if="forma.contacts.length>0">
-                            <span class="text-xl font-semibold mb-2">{{ contact.ime_prezime ?? contact.name }}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.email">{{ contact.email }}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.email2">{{ contact.email2 }}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.phone">{{ contact.phone }}</span>
-                            <span class="text-sm text-gray-600" v-if="contact.phone2">{{ contact.phone2 }}</span>
-
-                        </div>
-                        <div v-else>
-                            Trenutno nema dodatih kontakata, kliknite na plus da ih dodate
-                        </div>
+                    </div>
+                    <div>
+                        <CustomeLabel for="mb">Maticni broj</CustomeLabel>
+                        <CustomInput
+                            :disabled="canEdit('MB')"
+                            :class="{'cursor-not-allowed' : canEdit('MB')}"
+                            maxlength="8"
+                            v-model="forma.MB"
+                            id="mb"/>
+                        <InputError :message="forma.errors.MB" v-if="forma.errors.MB"/>
 
                     </div>
                 </div>
 
-                <div>
-                    <div class="flex justify-between ">
-                        <label class="block text-gray-700 text-sm font-bold ">Funkcionalnosti</label>
-                        <span class="text-3xl font-bold text-green-600 cursor-pointer"
-                              v-show="!canEdit('funkcionalnosti')"
-                              @click="openFunctionalityModal">&#43;</span>
-                    </div>
+                <!-- Select & Functionality Div -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <CustomeLabel for="paket">Izaberite paket</CustomeLabel>
 
-                    <div
-                        class="bg-white shadow rounded  pr-12 pl-5 py-6 min-h-[320px] min-w-[400px] flex flex-col gap-1 relative">
-                        <div class="flex justify-between" v-if="forma.package">
-                            <label for="">Naziv funkc.</label>
-                            <label for="">Odradjeno</label>
-                        </div>
-                        <div v-else>
-                            Izaberite paket za prikaz funkcionalnosti
-                        </div>
-                        <div class="flex items-center justify-between gap-4"
-                             v-for="func in chosenFunctionalities"
-                             :key="uuidv4()"
-                        >
-                            <div class="flex flex-row-reverse gap-2">
-                                <label class="form-check-label" :for="func.funkcionalnost">
-                                    {{ func.funkcionalnost }}
-                                </label>
-                                <input
-                                    @change="toggleFunctionality(func)"
-                                    :checked="isChecked(func)"
-                                    :disabled="canEdit('funkcionalnosti')"
-                                    class="form-check-input border-2 border-black" type="checkbox" value=""
-                                    :id="func.funkcionalnost">
+                        <select id="paket"
+                                :disabled="canEdit('paket')"
+                                :class="{'cursor-not-allowed' : canEdit('paket')}"
+                                v-model="forma.package"
+                                @change="setFuncs"
+                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option
+                                v-for="pkg in packages" :key="pkg.id" :value="pkg.id"
+                            >{{ pkg.ime }}
+                            </option>
+                        </select>
+                        <InputError :message="forma.errors.package" v-if="forma.errors.package"/>
+
+                    </div>
+                    <div class="relative bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
+                        <button
+                            v-show="!canEdit('funkcionalnosti')"
+                            @click.prevent="openFunctionalityModal"
+                            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 focus:outline-none text-3xl">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                        <CustomeLabel for="grupacija">Funkcionalnosti</CustomeLabel>
+                        <div class="text-gray-600 h-52 overflow-y-auto">
+                            <div class="flex justify-between" v-if="forma.package">
+                                <label for="">Naziv funkc.</label>
+                                <label for="">Odradjeno</label>
                             </div>
-                            <div>
-
-                                <input class="form-check-input border-2 border-black" type="checkbox" value=""
-                                       @change="func.pivot.uradjeno = !func.pivot.uradjeno"
-                                       :checked="func.pivot.uradjeno"
-                                       :disabled="canEdit('funkcionalnosti')"
-
-                                >
+                            <div v-else>Izaberite paket za prikaz funkcionalnosti</div>
+                            <div class="flex items-center justify-between gap-4"
+                                 v-for="func in sortedFuncs"
+                                 :key="uuidv4()"
+                            >
+                                <div class="flex flex-row-reverse gap-2">
+                                    <label class="form-check-label"
+                                           :class="{'text-gray-400': !func.pivot.izabrano, 'text-black': func.pivot.izabrano}"
+                                           :for="func.funkcionalnost">
+                                        {{ func.funkcionalnost }}
+                                    </label>
+                                    <input
+                                        :true-value="1"
+                                        :false-value="0"
+                                        v-model="func.pivot.izabrano"
+                                        :checked="func.pivot.izabrano"
+                                        class="form-check-input border-2 border-black" type="checkbox" value=""
+                                        :id="func.funkcionalnost">
+                                </div>
+                                <div>
+                                    <input class="form-check-input border-2 border-black" type="checkbox" value=""
+                                           :true-value="1"
+                                           :false-value="0"
+                                           :disabled="!func.pivot.izabrano"
+                                           v-model="func.pivot.uradjeno"
+                                    >
+                                </div>
 
                             </div>
-
                         </div>
+                        <InputError :message="forma.errors.functionalities" v-if="forma.errors.functionalities"/>
+
                     </div>
-                    <InputError :message="forma.errors.functionalities" v-if="forma.errors.functionalities"/>
                 </div>
 
-                <div id="kontakt">
-                    <InputLabel for="email" value="Nacin pristupa"/>
-                    <div data-mdb-input-init class="form-outline min-w-[300px]">
-                        <textarea v-model="forma.connection"
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="relative bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
+                        <button
+                            v-if="!canEdit('kontakti')"
+                            @click.prevent="openContactModal"
+                            class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 focus:outline-none text-3xl">
+                            <i class="bi bi-plus"></i>
+                        </button>
+
+                        <CustomeLabel for="grupacija">Kontakti</CustomeLabel>
+
+                        <div class="max-h-28 overflow-y-auto">
+                            <template v-for="(contact, index) in forma.contacts" :key="index">
+                                <div
+                                    @dblclick="editContact(contact)"
+                                    class="flex justify-between items-center py-2 border-b border-gray-300 cursor-pointer hover:bg-gray-100">
+                                    <div class="text-sm font-medium text-gray-700">{{ contact.ime_prezime }}</div>
+                                    <div class="text-sm text-gray-600">{{ contact.phone }}</div>
+                                    <div class="text-sm text-gray-600">{{ contact.email }}</div>
+                                    <div class="text-sm text-gray-600">{{ contact.phone2 }}</div>
+                                    <div class="text-sm text-gray-600">{{ contact.email2 }}</div>
+                                </div>
+                            </template>
+                            <InputError :message="forma.errors.contacts" v-if="forma.errors.contacts"/>
+                            <div v-if="forma.contacts.length === 0" class="text-gray-600">Trenutno nema kontakata</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
+                        <label for="connectionMethod" class="block text-sm font-medium text-gray-700 mb-2">Nacin
+                            konekcije</label>
+                        <textarea id="connectionMethod" rows="4"
                                   :disabled="canEdit('konekcija')"
-                                  :class="{'cursor-not-allowed' : canEdit('klijent')}"
-                                  class="form-control border-bg-300 shadow bg-white" id="textAreaExample1"
-                                  rows="13"></textarea>
+                                  :class="{'cursor-not-allowed' : canEdit('konekcija')}"
+                                  v-model="forma.connection"
+                                  class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                  placeholder="Kredencijali za konekciju"></textarea>
+                        <InputError :message="forma.errors.connection" v-if="forma.errors.connection"/>
                     </div>
-                    <InputError :message="forma.errors.connection" v-if="forma.errors.connection"/>
                 </div>
-            </div>
-            <div id="status_datum" class="flex flex-row gap-4 items-center">
-                <div class="mt-4">
-                    <InputLabel for="email" value="Status implementacije"/>
 
-                    <select
-                        v-model="forma.implementation_status"
-                        class="form-select h-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1"
-                        aria-label="Default select example"
-                        :disabled="canEdit('status_implementacije')"
-                        :class="{'cursor-not-allowed' : canEdit('status_implementacije')}"
-                    >
-                        <option :value="status.id" v-for="status in statuses" :key="status.id"> {{ status.naziv }}
-                        </option>
-                    </select>
+                <!-- Three Labels & Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Implementation Status Select -->
+                    <div>
+                        <CustomeLabel for="implementation_status">Status implementacije</CustomeLabel>
+                        <select id="selectOption" v-model="forma.implementation_status"
+                                :disabled="canEdit('status_implementacije')"
+                                :class="{'cursor-not-allowed' : canEdit('status_implementacije')}"
+                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option :value="status.id" v-for="status in statuses" :key="status.id">{{
+                                    status.naziv
+                                }}
+                            </option>
+                        </select>
+                        <InputError :message="forma.errors.implementation_status"
+                                    v-if="forma.errors.implementation_status"/>
 
-                    <InputError :message="forma.errors.implementation_status"
-                                v-if="forma.errors.implementation_status"/>
-                </div>
-                <div v-if="forma.implementation_status === 3" class="mt-10 flex flex-col gap-2">
-                    <div class="flex gap-2 items-center">
-                        <label for="potpuno">Potpuno</label>
-                        <input
-                            id="potpuno"
-                            :disabled="canEdit('status_implementacije')"
-                            v-model="forma.tip_implementacije" type="radio" value="Potpuno">
                     </div>
-                    <div class="flex gap-2 items-center">
-                        <label for="cekanje">Čeka se neka funkcionalnost</label>
-                        <input type="radio"
-                               id="cekanje"
-                               :disabled="canEdit('status_implementacije')"
-                               v-model="forma.tip_implementacije" value="Čeka se neka funkcionalnost">
+                    <!-- Show ONLY if implementation status is 3 -->
+                    <transition name="fade">
+                        <div v-if="forma.implementation_status === 3"
+                             class="col-span-3 md:col-span-1 flex flex-col space-y-2">
+                            <div class="flex gap-2 items-center">
+                                <input
+                                    :disabled="canEdit('status_implementacije')"
+                                    :class="{'cursor-not-allowed' : canEdit('status_implementacije')}"
+                                    v-model="forma.tip_implementacije" type="radio" value="Potpuno" id="potpuno">
+                                <label for="potpuno" class="text-gray-700">Potpuno</label>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <input v-model="forma.tip_implementacije" type="radio"
+                                       :disabled="canEdit('status_implementacije')"
+                                       :class="{'cursor-not-allowed' : canEdit('status_implementacije')}"
+                                       value="Čeka se neka funkcionalnost"
+                                       id="fja">
+                                <label for="fja" class="text-gray-700">Čeka se neka funkcionalnost</label>
+                            </div>
+                            <!-- Date Picker -->
+                            <div>
+                                <label for="datum" class="block text-sm font-medium text-gray-700 mb-2">Datum
+                                    implementacije</label>
+                                <input
+                                    :disabled="canEdit('datum_implementacije')"
+                                    :class="{'cursor-not-allowed' : canEdit('datum_implementacije')}"
+                                    type="date" id="datum" v-model="forma.datum"
+                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <!-- Error Handling -->
+                            <InputError :message="forma.errors.tip_implementacije"
+                                        v-if="forma.errors.tip_implementacije"/>
+                        </div>
+                    </transition>
+
+
+                    <!-- Billing Method Select -->
+                    <div>
+                        <CustomeLabel for="nacin_fakturisanja">Nacin fakturisanja</CustomeLabel>
+                        <select id="nacin_fakturisanja"
+                                :disabled="canEdit('tip_fakturisanja')"
+                                :class="{'cursor-not-allowed' : canEdit('tip_fakturisanja')}"
+                                v-model="forma.tip_fakturisanja"
+                                class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option v-for="tip in fakturisanje" :value="tip.id">{{ tip.naziv_fakturisanja }}</option>
+                        </select>
+                        <InputError :message="forma.errors.tip_fakturisanja" v-if="forma.errors.tip_fakturisanja"/>
+
                     </div>
-                    <InputError :message="forma.errors.tip_implementacije" v-if="forma.errors.tip_implementacije"/>
-                </div>
-                <div class="mt-4">
-                    <InputLabel for="datum" value="Datum implementacije"/>
-
-                    <TextInput
-                        id="datum"
-                        type="date"
-                        class="mt-1 block w-full"
-                        v-model="forma.date"
-                        :disabled="canEdit('datum_implementacije')"
-                        :class="{'cursor-not-allowed' : canEdit('datum_implementacije')}"
-                    />
-                    <InputError :message="forma.errors.date" v-if="forma.errors.date"/>
-
                 </div>
 
-                <div class="mt-4">
-                    <InputLabel for="godina" value="Godina ugovora"/>
+                <!-- Three Labels & Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <CustomeLabel for="godina_ugovora">Godina ugovora</CustomeLabel>
+                        <CustomInput
+                            :disabled="canEdit('godina_ugovora')"
+                            :class="{'cursor-not-allowed' : canEdit('godina_ugovora')}"
+                            v-model="forma.godina_ugovora"
+                            id="godina_ugovora"/>
+                        <InputError :message="forma.errors.godina_ugovora" v-if="forma.errors.godina_ugovora"/>
 
-                    <TextInput
-                        id="godina"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.godina_ugovora"
-                        required
-                        :disabled="canEdit('godina_ugovora')"
-                        :class="{'cursor-not-allowed' : canEdit('godina_ugovora')}"
-                    />
-                    <InputError :message="forma.errors.godina_ugovora" v-if="forma.errors.godina_ugovora"/>
+                    </div>
+                    <div>
+                        <CustomeLabel for="aneks">Aneks</CustomeLabel>
+                        <CustomInput
+                            :disabled="canEdit('aneks')"
+                            :class="{'cursor-not-allowed' : canEdit('aneks')}"
+                            v-model="forma.aneks"
+                            id="aneks"/>
+                        <InputError :message="forma.errors.aneks" v-if="forma.errors.aneks"/>
 
+                    </div>
+                    <div>
+                        <CustomeLabel for="ugovor">Ugovor</CustomeLabel>
+                        <CustomInput
+                            :disabled="canEdit('ugovor')"
+                            :class="{'cursor-not-allowed' : canEdit('ugovor')}"
+                            v-model="forma.ugovor"
+                            id="ugovor"/>
+                        <InputError :message="forma.errors.ugovor" v-if="forma.errors.ugovor"/>
+
+                    </div>
                 </div>
-            </div>
-            <div id="ugovor_aneks" class="flex flex-row gap-4">
-                <div class="mt-4">
-                    <InputLabel for="ugovor" value="Ugovor"/>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div>
+                        <CustomeLabel for="godina_ugovora">Iznos fakture</CustomeLabel>
+                        <CustomInput
+                            :disabled="canEdit('iznos_fakture')"
+                            :class="{'cursor-not-allowed' : canEdit('iznos_fakture')}"
+                            v-model="forma.iznos_fakture"
+                            id="iznos_fakture"/>
+                        <InputError :message="forma.errors.iznos_fakture" v-if="forma.errors.iznos_fakture"/>
 
-                    <TextInput
-                        id="ugovor"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.ugovor"
-                        required
-                        :disabled="canEdit('ugovor')"
-                        :class="{'cursor-not-allowed' : canEdit('ugovor')}"
-                    />
-                    <InputError :message="forma.errors.ugovor" v-if="forma.errors.ugovor"/>
+                    </div>
+                    <div>
+                        <CustomeLabel for="bpig">Broj besplatnih instalacija godisnje</CustomeLabel>
+                        <CustomInput
+                            v-model="forma.broj_preostalih_instalacija"
+                            id="bpig"/>
+                        <InputError :message="forma.errors.broj_preostalih_instalacija"
+                                    v-if="forma.errors.broj_preostalih_instalacija"/>
 
+                    </div>
+                    <div>
+                        <div class=" ">
+                            <button class="btn btn-secondary mt-4" @click.prevent="openInstallationDateModal"
+                                    :disabled="!forma.broj_preostalih_instalacija">Pogledaj listu datuma besplatnih
+                                instalacija
+                            </button>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="mt-4">
-                    <InputLabel for="aneks" value="Aneks"/>
-
-                    <TextInput
-                        id="aneks"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.aneks"
-                        :disabled="canEdit('aneks')"
-                        :class="{'cursor-not-allowed' : canEdit('aneks')}"
-                    />
-                    <InputError :message="forma.errors.aneks" v-if="forma.errors.aneks"/>
-
+                <div>
+                    <PrimaryButton>Snimi</PrimaryButton>
                 </div>
-                <div class="mt-4">
-                    <InputLabel for="email" value="Tip fakturisanja"/>
-
-                    <select
-                        v-model="forma.tip_fakturisanja"
-                        class="form-select h-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1"
-                        aria-label="Default select example"
-                        :disabled="canEdit('tip_fakturisanja')"
-                        :class="{'cursor-not-allowed' : canEdit('tip_fakturisanja')}"
-                    >
-                        <option :value="faktura.id" v-for="faktura in fakturisanje" :key="faktura.id">
-                            {{ faktura.naziv_fakturisanja }}
-                        </option>
-
-                    </select>
-
-                    <InputError :message="forma.errors.tip_fakturisanja" v-if="forma.errors.tip_fakturisanja"/>
-                </div>
-                <div class="mt-4">
-                    <InputLabel for="iznos_fakture" value="Iznos fakture"/>
-
-                    <TextInput
-                        id="iznos_fakture"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.iznos_fakture"
-                        :disabled="canEdit('iznos_fakture')"
-                        :class="{'cursor-not-allowed' : canEdit('iznos_fakture')}"
-                        required
-                    />
-
-                    <InputError :message="forma.errors.iznos_fakture" v-if="forma.errors.iznos_fakture"/>
-                </div>
-
-            </div>
-            <div id="instalacije" class="flex flex-row gap-4">
-                <div class="mt-4">
-                    <InputLabel for="broj_besplatnih_instalacija_godisnje" value="Broj besplatnih instalacija godisnje"/>
-
-                    <TextInput
-                        id="broj_besplatnih_instalacija_godisnje"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.broj_besplatnih_instalacija_godisnje"
-
-                    />
-                    <InputError :message="forma.errors.ugovor" v-if="forma.errors.broj_besplatnih_instalacija_godisnje"/>
-
-                </div>
-                <div class="mt-4">
-                    <InputLabel for="bpig" value="Broj PREOSTALIH besplatnih instalacija godisnje"/>
-
-                    <TextInput
-                        id="bpig"
-                        type="text"
-                        class="mt-1 block w-full"
-                        v-model="forma.broj_preostalih_instalacija"
-                        disabled
-                    />
-                    <InputError :message="forma.errors.ugovor" v-if="forma.errors.broj_preostalih_instalacija"/>
-
-                </div>
-                <div class="mt-5 flex justify-center items-center">
-                    <button class="btn btn-secondary" @click.prevent="openInstallationDateModal">Lista datuma besplatnih
-                        instalacija
-                    </button>
-                </div>
-            </div>
-            <div class="mt-10 finish-button" v-show="$page.props.auth.user.role_id != 4">
-                <PrimaryButton>Zavrsi popunjavanje</PrimaryButton>
-            </div>
-
-
-        </form>
+            </form>
+        </div>
     </div>
-
 </template>
 
 <style scoped>
 
 
-
 .disabled-form .finish-button {
     display: none;
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.7s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
 }
 
 </style>

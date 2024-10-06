@@ -63,4 +63,8 @@ class User extends Authenticatable
         return $this->hasMany(Contract::class, 'zaduzen_za_implementaciju');
     }
 
+    public function implementations(): HasMany
+    {
+        return $this->hasMany(Implementation::class, 'user_id');
+    }
 }

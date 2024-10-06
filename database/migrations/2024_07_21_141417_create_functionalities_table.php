@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('functionalities', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\Functionalities::class, 'trziste_id');
+            $table->foreignIdFor(\App\Models\Market::class, 'trziste_id');
             $table->string('funkcionalnost');
+            $table->string('type')->nullable();
             $table->timestamps();
         });
     }

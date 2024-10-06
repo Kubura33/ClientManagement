@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignIdFor(\App\Models\Functionalities::class, 'funkcionalnost_id');
             $table->foreignIdFor(Contract::class, 'ugovor_id');
             $table->boolean("uradjeno")->default(false);
+            $table->boolean("izabrano")->default(false);
             $table->timestamps();
         });
     }
