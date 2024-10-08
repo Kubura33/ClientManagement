@@ -26,32 +26,36 @@ const logout = () => {
 
 <template>
     <div
-        class="sidebar relative top-0 bottom-0 lg:left-0 min-h-screen p-2  overflow-y-auto text-center bg-gray-900"
-        style="min-width: 300px; max-width: 300px"
+        class="fixed top-0 bottom-0 left-0 min-h-screen p-2 overflow-y-auto bg-[#e8dc9e]"
+        style="width: 300px"
     >
-        <div class="fixed scale-90 transform origin-top-left" style="width: 290px;">
-            <div class="text-gray-100 text-xl">
+        <div class="h-40 flex flex-column items-center justify-center">
+            <img src="/logo.svg" alt="">
+            <small>B2B evidencija klijenata</small>
+        </div>
+        <div class=" scale-90 transform origin-top-left text-black">
+            <div class="text-black text-xl">
                 <div class="p-2.5 mt-1 flex align-items-end">
-                    <h1 class="text-center text-gray-200  cursor-pointer" @click="goBack">&larr;</h1>
+                    <h1 class="text-center text-black  cursor-pointer" @click="goBack">&larr;</h1>
 
                 </div>
 
-                <div class="my-2 bg-gray-600 h-[1px]"></div>
+                <div class="my-2 bg-gray-900 h-[1px]"></div>
             </div>
 
             <Link
                 :href="route('dashboard')"
-                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white no-underline"
+                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-black no-underline"
             >
                 <i class="bi bi-house-door-fill"></i>
-                <span class="text-[15px] ml-4 text-gray-200 font-bold">Pocetna</span>
+                <span class="text-[15px] ml-4 text-black font-bold">Pocetna</span>
             </Link>
             <Link :href="route('trzista.index')"
-                class="p-2.5 mt-3 flex items-center text-current no-underline rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white"
+                class="p-2.5 mt-3 flex items-center text-current no-underline rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-black"
             >
                 <i class="bi bi-flag-fill"></i>
                 <div class="flex justify-between w-full items-center">
-                    <span class="text-[15px] ml-4 text-gray-200 font-bold">Trzista</span>
+                    <span class="text-[15px] ml-4 text-black font-bold">Trzista</span>
                 </div>
             </Link>
 
@@ -65,22 +69,22 @@ const logout = () => {
                 :href="route('dodaj-korisnika')"
                 class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white no-underline"
             >
-                <i class="bi bi-person-add"></i>
-                <span class="text-[15px] ml-4 text-gray-200 font-bold">Dodavanje korisnika</span>
+                <i class="bi bi-person-add text-black"></i>
+                <span class="text-[15px] ml-4 text-black font-bold">Dodavanje korisnika</span>
             </Link>
-            <div class="my-4 bg-gray-600 h-[1px]"></div>
+            <div class="my-4 bg-gray-900 h-[1px]"></div>
             <Link :href="route('profile.edit')"
-                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white no-underline text-current"
+                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-black no-underline text-current"
             >
                 <i class="bi bi-person-circle"></i>
-                <span class="text-[15px] ml-4 text-gray-200 font-bold">Profil</span>
+                <span class="text-[15px] ml-4 text-black font-bold">Profil</span>
             </Link>
             <div
                 @click="logout"
-                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-white no-underline text-current"
+                class="p-2.5 mt-3 flex items-center rounded-md px-4 duration-300 cursor-pointer hover:bg-blue-600 text-black no-underline text-current"
             >
                 <i class="bi bi-box-arrow-in-right"></i>
-                <span class="text-[15px] ml-4 text-gray-200 font-bold">Logout</span>
+                <span class="text-[15px] ml-4 text-black font-bold">Logout</span>
             </div>
         </div>
     </div>

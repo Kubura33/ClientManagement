@@ -46,17 +46,19 @@ watch(
 </script>
 
 <template>
-    <div class="h-screen">
-        <div class="min-h-screen bg-[#E5E8EF] " >
-            <!-- Page Heading -->
-            <header class="bg-indigo-600 text-white shadow-lg fixed w-full h-[85px] z-10">
+    <div class="h-screen flex bg-[#d6d0b0]">
+        <!-- Sidebar -->
+        <Sidebar class="mt-0" :izabrano="izabranoTrziste" :trzista="$page.props.trzista" :otherCompanies="otherCompanies" />
+
+        <!-- Main content -->
+        <div class="flex-grow">
+            <!-- Header -->
+            <header class="bg-[#DFD6A7] text-black  fixed w-[calc(100%-300px)] h-[85px] z-10 left-[300px]">
                 <div class="mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-                    <!-- Left section: Title -->
                     <h2 class="font-roboto text-xl font-semibold leading-tight">
                         B2B Support - Evidencija klijenata - {{ $page.props.auth.user.username }} {{ header }}
                     </h2>
 
-                    <!-- Right section: User Info -->
                     <div class="flex items-center space-x-4">
                         <span class="text-sm font-medium">Welcome, {{ izabranoTrziste }}</span>
                         <img class="w-8 h-8 rounded-full border-2 border-white" src="{{ $page.props.auth.user.avatarUrl }}" alt="User Avatar">
@@ -64,20 +66,12 @@ watch(
                 </div>
             </header>
 
-            <div class="flex ">
-                <Sidebar class="mt-[85px] "
-
-                         :izabrano="izabranoTrziste"
-                         :trzista="$page.props.trzista"
-                         :otherCompanies="otherCompanies"
-                />
-                <main class="flex-grow-1 pt-10 p-4 mt-[85px] transform origin-top-left">
-                    <slot />
-                </main>
-            </div>
-
-
+            <!-- Main Content -->
+            <main class="pt-24 px-4 ml-[300px] bg-[#d6d0b0]">
+                <slot />
+            </main>
         </div>
     </div>
 </template>
+
 

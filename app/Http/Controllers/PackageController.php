@@ -14,7 +14,7 @@
 
     class PackageController extends Controller
     {
-        public function create(Market $market)
+        public function create()
         {
             if (!Gate::allows('can-access', 'paketi')) {
                 return redirect()->route('dashboard')->with('error', "Ne mozete da pristupiti ovoj stranici");
@@ -69,13 +69,10 @@
 
         }
 
-        public function edit(Market $market)
+        public function edit()
         {
-            if($market){
-                $existing_funcs = $market->functionalities;
-            }else {
-                return redirect()->route('dashboard')->with('error', "Trziste nije izabrano");
-            }
+           $market = Market::all()->first();
+           $existing_funcs = [];
 
             return Inertia::render('Package/EditPackage', [
                 'market' => $market,

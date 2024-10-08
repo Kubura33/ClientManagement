@@ -14,7 +14,7 @@ class TrzisteController extends Controller
     public function index()
     {
         $markets = Market::all();
-        return Inertia::render('Trzista/TrzistaIndex', [
+        return Inertia::render('Dashboard', [
             'markets' => $markets
         ]);
     }

@@ -348,8 +348,8 @@ const selectedWorker = computed({
         :is-edit="isEditContact"
         @finishEdit="finishEdittingContact"
         ref="contactModal"></ContactModal>
-    <div class="min-h-screen pt-0 -mt-20 p-6  flex">
-        <div class="container max-w-screen-lg mx-auto bg-white p-8 rounded-lg shadow-lg transform scale-75">
+    <div class="min-h-screen pt-0 -mt-24 p-6  flex">
+        <div class="container max-w-screen-lg mx-auto bg-[#f7f2dc] p-8 rounded-lg  transform scale-75">
             <!-- Form Title -->
             <h2 class="text-2xl font-semibold mb-6 text-gray-700">Evidencija Klijenta</h2>
 
@@ -382,7 +382,7 @@ const selectedWorker = computed({
                 </div>
 
                 <!-- Three Labels & Inputs -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <CustomeLabel for="naziv_firme">Naziv firme</CustomeLabel>
                         <CustomInput
@@ -415,10 +415,6 @@ const selectedWorker = computed({
                         <InputError :message="forma.errors.MB" v-if="forma.errors.MB"/>
 
                     </div>
-                </div>
-
-                <!-- Select & Functionality Div -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <CustomeLabel for="paket">Izaberite paket</CustomeLabel>
 
@@ -436,6 +432,11 @@ const selectedWorker = computed({
                         <InputError :message="forma.errors.package" v-if="forma.errors.package"/>
 
                     </div>
+                </div>
+
+                <!-- Select & Functionality Div -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
                     <div class="relative bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
                         <button
                             v-show="!canEdit('funkcionalnosti')"
@@ -444,7 +445,7 @@ const selectedWorker = computed({
                             <i class="bi bi-plus"></i>
                         </button>
                         <CustomeLabel for="grupacija">Funkcionalnosti</CustomeLabel>
-                        <div class="text-gray-600 h-52 overflow-y-auto">
+                        <div class="text-gray-600 h-52 overflow-y-auto px-2">
                             <div class="flex justify-between" v-if="forma.package">
                                 <label for="">Naziv funkc.</label>
                                 <label for="">Odradjeno</label>
@@ -482,9 +483,6 @@ const selectedWorker = computed({
                         <InputError :message="forma.errors.functionalities" v-if="forma.errors.functionalities"/>
 
                     </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="relative bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
                         <button
                             v-if="!canEdit('kontakti')"
@@ -495,7 +493,7 @@ const selectedWorker = computed({
 
                         <CustomeLabel for="grupacija">Kontakti</CustomeLabel>
 
-                        <div class="max-h-28 overflow-y-auto">
+                        <div class="align-self overflow-y-auto">
                             <template v-for="(contact, index) in forma.contacts" :key="index">
                                 <div
                                     @dblclick="editContact(contact)"
@@ -514,7 +512,7 @@ const selectedWorker = computed({
                     <div class="bg-gray-50 p-4 rounded-md border border-gray-300 shadow-sm">
                         <label for="connectionMethod" class="block text-sm font-medium text-gray-700 mb-2">Nacin
                             konekcije</label>
-                        <textarea id="connectionMethod" rows="4"
+                        <textarea id="connectionMethod" rows="8"
                                   :disabled="canEdit('konekcija')"
                                   :class="{'cursor-not-allowed' : canEdit('konekcija')}"
                                   v-model="forma.connection"
@@ -579,16 +577,26 @@ const selectedWorker = computed({
 
 
                     <!-- Billing Method Select -->
-                    <div>
-                        <CustomeLabel for="nacin_fakturisanja">Nacin fakturisanja</CustomeLabel>
-                        <select id="nacin_fakturisanja"
-                                :disabled="canEdit('tip_fakturisanja')"
-                                :class="{'cursor-not-allowed' : canEdit('tip_fakturisanja')}"
-                                v-model="forma.tip_fakturisanja"
+                    <div class="flex items-center gap-4 ">
+                        <div class="flex-grow-1">
+                            <CustomeLabel for="nacin_fakturisanja">Nacin fakturisanja</CustomeLabel>
+                            <select id="nacin_fakturisanja"
+                                    :disabled="canEdit('tip_fakturisanja')"
+                                    :class="{'cursor-not-allowed' : canEdit('tip_fakturisanja')}"
+                                    v-model="forma.tip_fakturisanja"
+                                    class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option v-for="tip in fakturisanje" :value="tip.id">{{ tip.naziv_fakturisanja }}</option>
+                            </select>
+                            <InputError :message="forma.errors.tip_fakturisanja" v-if="forma.errors.tip_fakturisanja"/>
+                        </div>
+                        <div>
+                            <CustomeLabel for="nacin_fakturisanja">Pocetak fakturisanja</CustomeLabel>
+
+                            <input
+
+                                type="date" id="datum" v-model="forma.datum"
                                 class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option v-for="tip in fakturisanje" :value="tip.id">{{ tip.naziv_fakturisanja }}</option>
-                        </select>
-                        <InputError :message="forma.errors.tip_fakturisanja" v-if="forma.errors.tip_fakturisanja"/>
+                        </div>
 
                     </div>
                 </div>

@@ -11,12 +11,14 @@
         return Inertia::render('Auth/Login');
     })->name('login');
 
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->middleware(['auth'])->name('dashboard');
+
 
 
     Route::middleware('auth')->group(function () {
+
+        //Homepage
+        Route::get('/dashboard', [\App\Http\Controllers\TrzisteController::class, 'index'])->name('dashboard');
+
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -33,8 +35,8 @@
         Route::get('/korisnici', [UserController::class, 'show'])->name('korisnici');
         Route::post('/korisnici', [UserController::class, 'update'])->name('korisnici');
         //Packages
-        Route::get('/kreiraj-paket/{market}', [PackageController::class, 'create'])->name('paket.create');
-        Route::get('/paket/{market}', [PackageController::class, 'edit'])->name('paket.edit');
+        Route::get('/kreiraj-paket', [PackageController::class, 'create'])->name('paket.create');
+        Route::get('/paket', [PackageController::class, 'edit'])->name('paket.edit');
         Route::post('/paket', [PackageController::class, 'store'])->name('paket.store');
         Route::patch('/paket/{package}', [PackageController::class, 'update'])->name('paket.update');
         Route::post('/dodaj-korisnika', [\App\Http\Controllers\UserController::class, 'store'])->name('dodaj-korisnika.store');
@@ -50,9 +52,9 @@
         })->name('trziste.show');
 
         //FunctionalitiesToPackage
-        Route::get('/nova-funkctionalnost/{market}', [\App\Http\Controllers\FunctionalitiesController::class, 'create'])->name('nova-funkctionalnost');
+        Route::get('/nova-funkctionalnost', [\App\Http\Controllers\FunctionalitiesController::class, 'create'])->name('nova-funkctionalnost');
         Route::post('/nova-funkcionalnost', [\App\Http\Controllers\FunctionalitiesController::class, 'store'])->name('nova-funkcionalnost.store');
-        Route::get('/paket-funkcionalnost/{market}', [\App\Http\Controllers\FunctionalitiesController::class, 'functionalityToPackage'])->name('paket-funkcionalnost.create');
+        Route::get('/paket-funkcionalnost', [\App\Http\Controllers\FunctionalitiesController::class, 'functionalityToPackage'])->name('paket-funkcionalnost.create');
         Route::post('/paket-funkcionalnost', [\App\Http\Controllers\FunctionalitiesController::class, 'storeFuncToPackage'])->name('paket-funkcionalnost.store');
 
     });
